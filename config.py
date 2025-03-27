@@ -29,6 +29,20 @@ INDIAN_NEWS_SOURCES = [
     "Bloomberg Quint"
 ]
 
+# Financial news sources for Tavily API
+FINANCIAL_NEWS_SOURCES = [
+    "economictimes.indiatimes.com",
+    "moneycontrol.com",
+    "business-standard.com",
+    "financialexpress.com",
+    "livemint.com",
+    "businesstoday.in",
+    "cnbctv18.com",
+    "bloombergquint.com",
+    "rbi.org.in",
+    "sebi.gov.in"
+]
+
 # Popular Indian financial books for RAG
 FINANCIAL_BOOKS = [
     "Let's Talk Money by Monika Halan",

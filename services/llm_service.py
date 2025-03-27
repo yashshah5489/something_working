@@ -209,18 +209,120 @@ class LLMService:
             logger.error(f"Error generating book recommendations with LLM: {e}")
             return "Unable to provide book recommendations at the moment. Please try again later."
 
-    def answer_financial_question(self, question, user_id="guest"):
+    def extract_keywords_from_question(self, question):
         """
-        Answer a financial question using the LLM, enhanced with book insights
+        Extract keywords from a financial question for news search
         """
         try:
-            # First, get an initial LLM response
+            if self.simplified_mode or not self.client:
+                # In simplified mode, extract keywords using basic text processing
+                # Remove common words and extract potential keywords
+                common_words = ["the", "a", "an", "in", "on", "at", "to", "for", "with", "about", 
+                                "what", "how", "why", "when", "which", "who", "where", "is", "are", 
+                                "was", "were", "be", "been", "being", "have", "has", "had", "do", 
+                                "does", "did", "can", "could", "should", "would", "may", "might", 
+                                "must", "shall", "will", "i", "you", "he", "she", "it", "we", "they",
+                                "me", "him", "her", "us", "them"]
+                
+                words = question.lower().split()
+                keywords = [word for word in words if word not in common_words and len(word) > 3]
+                
+                # Return the most relevant keywords (up to 5)
+                return " ".join(keywords[:5])
+            
+            # Use LLM to extract keywords
+            prompt = f"""Extract 3-5 key financial terms or topics from the following question that would be useful for searching recent news:
+            
+            Question: {question}
+            
+            Return only the keywords separated by commas, with no additional explanation or text."""
+            
+            # Make LLM API call
+            completion = self.client.chat.completions.create(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": "You are a financial keyword extraction tool. Extract only the most relevant financial keywords."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.1,
+                max_tokens=50
+            )
+            
+            # Extract response
+            keywords = completion.choices[0].message.content.strip()
+            return keywords
+            
+        except Exception as e:
+            logger.error(f"Error extracting keywords: {e}")
+            # Fall back to basic keyword extraction
+            words = question.lower().split()
+            return " ".join([w for w in words if len(w) > 3][:5])
+
+    def get_news_context_for_question(self, question):
+        """
+        Get relevant news context for a financial question using Tavily
+        """
+        try:
+            # Extract keywords for news search
+            keywords = self.extract_keywords_from_question(question)
+            
+            if not keywords:
+                logger.info("No keywords extracted for news search")
+                return ""
+                
+            # Import Tavily API
+            from utils.tavily_api import TavilyNewsExtractor
+            tavily_client = TavilyNewsExtractor()
+            
+            # Search for relevant news
+            news_results = tavily_client.search_indian_financial_news(
+                query=keywords,
+                max_results=3
+            )
+            
+            if not news_results or "error" in news_results or not news_results.get("results"):
+                logger.info(f"No news results found for keywords: {keywords}")
+                return ""
+                
+            # Format news for context
+            news_context = "Here is recent news that may be relevant to the question:\n\n"
+            
+            for idx, item in enumerate(news_results.get("results", [])[:3]):
+                title = item.get("title", "")
+                content = item.get("content", "")
+                published = item.get("published_date", "")
+                source = item.get("source", "")
+                
+                news_context += f"[News {idx+1}] {title}\n"
+                news_context += f"Source: {source}, Date: {published}\n"
+                news_context += f"Summary: {content[:200]}...\n\n"
+                
+            return news_context
+            
+        except Exception as e:
+            logger.error(f"Error getting news context from Tavily: {e}")
+            return ""  # Return empty string on error
+
+    def answer_financial_question(self, question, user_id="guest"):
+        """
+        Answer a financial question using the LLM, enhanced with book insights and news
+        """
+        try:
+            # First, get relevant news context using Tavily
+            news_context = self.get_news_context_for_question(question)
+            
+            # Next, get an initial LLM response
             from services.rag_service import rag_service
 
-            # Format the initial prompt
-            initial_prompt = self.financial_qa_template.format(
-                question=question
-            )
+            # Format the initial prompt, including news context if available
+            if news_context:
+                initial_prompt = self.financial_qa_template.format(
+                    question=question
+                ) + f"\n\n{news_context}\n\nPlease consider this recent news in your response if relevant."
+            else:
+                initial_prompt = self.financial_qa_template.format(
+                    question=question
+                )
             
             # Make initial LLM API call
             initial_completion = self.client.chat.completions.create(
@@ -264,7 +366,7 @@ class LLMService:
                 # No book insights available, use initial response
                 final_answer = initial_answer
                 
-            # Prepare sources list from book references for database storage
+            # Prepare sources list from book references and news for database storage
             sources = []
             for ref in book_references:
                 sources.append({
