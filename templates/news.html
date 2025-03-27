@@ -59,13 +59,13 @@
     <!-- News Filters -->
     <div class="news-filters">
         <div class="btn-group" role="group">
-            <a href="{{ url_for('news', type='all') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'all' else '' }}">
+            <a href="{{ url_for('main.news', type='all') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'all' else '' }}">
                 All Financial News
             </a>
-            <a href="{{ url_for('news', type='regulatory') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'regulatory' else '' }}">
+            <a href="{{ url_for('main.news', type='regulatory') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'regulatory' else '' }}">
                 RBI & SEBI Updates
             </a>
-            <a href="{{ url_for('news', type='budget') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'budget' else '' }}">
+            <a href="{{ url_for('main.news', type='budget') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'budget' else '' }}">
                 Budget & Policy
             </a>
         </div>
@@ -98,7 +98,7 @@
                         <div class="mt-2">
                             <small class="text-muted">Related Stocks: 
                                 {% for stock in news.related_stocks %}
-                                <a href="{{ url_for('stocks', symbol=stock) }}">{{ stock }}</a>{% if not loop.last %}, {% endif %}
+                                <a href="{{ url_for('main.stock_detail', symbol=stock) }}">{{ stock }}</a>{% if not loop.last %}, {% endif %}
                                 {% endfor %}
                             </small>
                         </div>

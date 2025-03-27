@@ -239,7 +239,7 @@
                     {% for stock in trending_gainers %}
                     <li class="stock-item">
                         <div>
-                            <a href="{{ url_for('stocks', symbol=stock.symbol, exchange=stock.exchange) }}">
+                            <a href="{{ url_for('main.stock_detail', symbol=stock.symbol) }}">
                                 {{ stock.symbol }}
                             </a>
                             <small class="text-muted">{{ stock.name }}</small>
@@ -262,7 +262,7 @@
                     {% for stock in trending_losers %}
                     <li class="stock-item">
                         <div>
-                            <a href="{{ url_for('stocks', symbol=stock.symbol, exchange=stock.exchange) }}">
+                            <a href="{{ url_for('main.stock_detail', symbol=stock.symbol) }}">
                                 {{ stock.symbol }}
                             </a>
                             <small class="text-muted">{{ stock.name }}</small>

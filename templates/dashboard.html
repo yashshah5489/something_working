@@ -88,7 +88,7 @@
                     {% for stock in trending_gainers %}
                     <li class="stock-item">
                         <div>
-                            <a href="{{ url_for('stocks', symbol=stock.symbol, exchange=stock.exchange) }}">
+                            <a href="{{ url_for('main.stock_detail', symbol=stock.symbol) }}">
                                 {{ stock.symbol }}
                             </a>
                             <small class="text-muted">{{ stock.name }}</small>
@@ -111,7 +111,7 @@
                     {% for stock in trending_losers %}
                     <li class="stock-item">
                         <div>
-                            <a href="{{ url_for('stocks', symbol=stock.symbol, exchange=stock.exchange) }}">
+                            <a href="{{ url_for('main.stock_detail', symbol=stock.symbol) }}">
                                 {{ stock.symbol }}
                             </a>
                             <small class="text-muted">{{ stock.name }}</small>
@@ -151,7 +151,7 @@
                     {% else %}
                     <p>No recent news available</p>
                     {% endfor %}
-                    <a href="{{ url_for('news') }}" class="btn btn-outline-primary btn-sm">View All News</a>
+                    <a href="{{ url_for('main.news') }}" class="btn btn-outline-primary btn-sm">View All News</a>
                 </div>
             </div>
         </div>
@@ -174,7 +174,7 @@
                     {% else %}
                     <p>No regulatory updates available</p>
                     {% endfor %}
-                    <a href="{{ url_for('news', type='regulatory') }}" class="btn btn-outline-primary btn-sm">View All Updates</a>
+                    <a href="{{ url_for('main.news', type='regulatory') }}" class="btn btn-outline-primary btn-sm">View All Updates</a>
                 </div>
             </div>
         </div>

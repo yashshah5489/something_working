@@ -56,6 +56,23 @@ def dashboard():
         flash('An error occurred while loading the dashboard', 'danger')
         return render_template('dashboard.html')
 
+@main_bp.route('/stocks')
+@login_required
+def stocks():
+    """Stocks overview page route"""
+    try:
+        # Get query parameters
+        symbol = request.args.get('symbol', 'NIFTY50')
+        exchange = request.args.get('exchange', 'NSE')
+        
+        # Redirect to stock detail page
+        return redirect(url_for('main.stock_detail', symbol=symbol))
+        
+    except Exception as e:
+        logger.error(f"Error loading stocks page: {e}")
+        flash("An error occurred while loading the stocks page", 'danger')
+        return redirect(url_for('main.dashboard'))
+
 @main_bp.route('/stock/<symbol>')
 @login_required
 def stock_detail(symbol):
@@ -225,6 +242,12 @@ def search():
         flash('An error occurred while processing your search', 'danger')
         return redirect(url_for('main.dashboard'))
 
+@main_bp.route('/insights')
+@login_required
+def insights():
+    """Alias route for financial-insights for backward compatibility"""
+    return redirect(url_for('main.financial_insights'))
+
 @main_bp.route('/financial-insights', methods=['GET', 'POST'])
 @login_required
 def financial_insights():
@@ -281,6 +304,12 @@ def financial_insights():
         'financial_insights.html',
         suggested_questions=suggested_questions
     )
+
+@main_bp.route('/books')
+@login_required
+def books():
+    """Alias route for book-recommendations for backward compatibility"""
+    return redirect(url_for('main.book_recommendations'))
 
 @main_bp.route('/book-recommendations')
 @login_required
