@@ -1,0 +1,175 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .news-card {
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .news-container {
+        max-height: 800px;
+        overflow-y: auto;
+    }
+    
+    .news-item {
+        margin-bottom: 20px;
+        padding-bottom: 20px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .news-item:last-child {
+        border-bottom: none;
+    }
+    
+    .news-source {
+        display: inline-block;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-right: 8px;
+    }
+    
+    .analysis-card {
+        padding: 20px;
+        border-radius: 8px;
+    }
+    
+    .news-filters {
+        margin-bottom: 20px;
+    }
+    
+    .btn-refresh {
+        margin-left: 10px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h2 mb-4">India Financial News</h1>
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        An error occurred while loading the news. Please try again later.
+    </div>
+    {% else %}
+    
+    <!-- News Filters -->
+    <div class="news-filters">
+        <div class="btn-group" role="group">
+            <a href="{{ url_for('news', type='all') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'all' else '' }}">
+                All Financial News
+            </a>
+            <a href="{{ url_for('news', type='regulatory') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'regulatory' else '' }}">
+                RBI & SEBI Updates
+            </a>
+            <a href="{{ url_for('news', type='budget') }}" class="btn btn-outline-primary {{ 'active' if news_type == 'budget' else '' }}">
+                Budget & Policy
+            </a>
+        </div>
+        <button id="refreshNews" class="btn btn-outline-secondary btn-refresh">
+            <i data-feather="refresh-cw"></i> Refresh
+        </button>
+    </div>
+    
+    <div class="row">
+        <!-- News List -->
+        <div class="col-md-7">
+            <div class="news-card">
+                <h3>Latest News</h3>
+                <div id="newsContainer" class="news-container">
+                    {% for news in news_items %}
+                    <div class="news-item">
+                        <h4><a href="{{ news.url }}" target="_blank">{{ news.title }}</a></h4>
+                        <div class="mb-2">
+                            <span class="news-source bg-secondary">{{ news.source }}</span>
+                            <small class="text-muted">
+                                {% if news.published_date is string %}
+                                    {{ news.published_date.split('T')[0] }}
+                                {% else %}
+                                    {{ news.published_date.strftime('%Y-%m-%d') }}
+                                {% endif %}
+                            </small>
+                        </div>
+                        <p>{{ news.summary }}</p>
+                        {% if news.related_stocks %}
+                        <div class="mt-2">
+                            <small class="text-muted">Related Stocks: 
+                                {% for stock in news.related_stocks %}
+                                <a href="{{ url_for('stocks', symbol=stock) }}">{{ stock }}</a>{% if not loop.last %}, {% endif %}
+                                {% endfor %}
+                            </small>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% else %}
+                    <p>No news articles available. Please try refreshing or changing the filters.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- News Analysis -->
+        <div class="col-md-5">
+            <div class="analysis-card">
+                <h3>{{ analysis_title }}</h3>
+                <div id="newsAnalysis">
+                    {{ news_analysis|nl2br|safe }}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Feather icons
+        feather.replace();
+        
+        // Refresh news functionality
+        const refreshButton = document.getElementById('refreshNews');
+        if (refreshButton) {
+            refreshButton.addEventListener('click', function() {
+                refreshButton.disabled = true;
+                refreshButton.innerHTML = '<i data-feather="loader"></i> Loading...';
+                feather.replace();
+                
+                // Make API call to refresh news
+                fetch('/api/news/refresh', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        type: '{{ news_type }}'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Reload the page to show new news
+                        window.location.reload();
+                    } else {
+                        alert('Error refreshing news: ' + data.error);
+                        refreshButton.disabled = false;
+                        refreshButton.innerHTML = '<i data-feather="refresh-cw"></i> Refresh';
+                        feather.replace();
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Error refreshing news. Please try again.');
+                    refreshButton.disabled = false;
+                    refreshButton.innerHTML = '<i data-feather="refresh-cw"></i> Refresh';
+                    feather.replace();
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

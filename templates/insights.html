@@ -1,0 +1,189 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .insights-card {
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .search-container {
+        margin-bottom: 40px;
+    }
+    
+    .answer-container {
+        margin-top: 20px;
+    }
+    
+    .book-recommendations {
+        margin-top: 30px;
+    }
+    
+    .book-card {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        transition: transform 0.2s ease;
+    }
+    
+    .book-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .book-title {
+        font-size: 1.1rem;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    
+    .book-author {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+    
+    .book-topics {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 10px;
+    }
+    
+    .book-topic {
+        background-color: rgba(52, 152, 219, 0.2);
+        color: #3498db;
+        font-size: 0.8rem;
+        padding: 2px 8px;
+        border-radius: 4px;
+        margin-right: 5px;
+        margin-bottom: 5px;
+    }
+    
+    .book-relevance {
+        font-size: 0.9rem;
+        margin-bottom: 10px;
+    }
+    
+    .book-insights {
+        font-size: 0.9rem;
+    }
+    
+    .insight-item {
+        margin-bottom: 5px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h2 mb-4">Financial Q&A</h1>
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        An error occurred while generating insights. Please try again later.
+    </div>
+    {% else %}
+    
+    <!-- Search Form -->
+    <div class="insights-card search-container">
+        <h3 class="mb-3">Ask a Question</h3>
+        <form id="insightsForm" method="get" action="{{ url_for('insights') }}">
+            <div class="input-group mb-3">
+                <input type="text" id="insightsQuery" name="query" class="form-control" 
+                       placeholder="E.g., How should I invest for retirement in India? How do SIPs work?" 
+                       value="{{ query }}" required>
+                <button class="btn btn-primary" type="submit" id="insightsButton">
+                    <i data-feather="search"></i> Get Insights
+                </button>
+            </div>
+            <p class="text-muted">Ask any financial question specific to the Indian context. Our AI will provide insights based on market data, regulations, and expert financial books.</p>
+        </form>
+    </div>
+    
+    {% if answer %}
+    <!-- Answer Card -->
+    <div class="insights-card answer-container">
+        <h3 class="mb-3">Expert Answer</h3>
+        <div id="insightsAnswer">
+            {{ answer|nl2br|safe }}
+        </div>
+    </div>
+    
+    <!-- Book Recommendations -->
+    {% if book_recommendations %}
+    <div class="book-recommendations">
+        <h3 class="mb-3">Recommended Books</h3>
+        <div class="row">
+            {% for book in book_recommendations %}
+            <div class="col-md-4">
+                <div class="book-card">
+                    <div class="book-title">{{ book.title }}</div>
+                    <div class="book-author">by {{ book.author }}</div>
+                    
+                    <div class="book-topics">
+                        {% for topic in book.topics[:3] %}
+                        <span class="book-topic">{{ topic }}</span>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="book-insights">
+                        <strong>Key Insights:</strong>
+                        <ul class="mb-0">
+                            {% for insight in book.key_insights %}
+                            <li class="insight-item">{{ insight }}</li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    {% endif %}
+    
+    <!-- Popular Questions -->
+    <div class="insights-card">
+        <h3 class="mb-3">Popular Questions</h3>
+        <div class="row">
+            <div class="col-md-6">
+                <ul>
+                    <li><a href="{{ url_for('insights', query='What are the best tax-saving investment options in India?') }}">What are the best tax-saving investment options in India?</a></li>
+                    <li><a href="{{ url_for('insights', query='How do I start investing in mutual funds in India?') }}">How do I start investing in mutual funds in India?</a></li>
+                    <li><a href="{{ url_for('insights', query='What is the difference between ELSS and PPF in India?') }}">What is the difference between ELSS and PPF in India?</a></li>
+                    <li><a href="{{ url_for('insights', query='How does capital gains tax work on stocks in India?') }}">How does capital gains tax work on stocks in India?</a></li>
+                </ul>
+            </div>
+            <div class="col-md-6">
+                <ul>
+                    <li><a href="{{ url_for('insights', query='What is the ideal asset allocation for a 30-year old Indian?') }}">What is the ideal asset allocation for a 30-year old Indian?</a></li>
+                    <li><a href="{{ url_for('insights', query='How much should I save for retirement in India?') }}">How much should I save for retirement in India?</a></li>
+                    <li><a href="{{ url_for('insights', query='Are cryptocurrencies legal in India?') }}">Are cryptocurrencies legal in India?</a></li>
+                    <li><a href="{{ url_for('insights', query='How do I analyze whether a stock is overvalued in Indian market?') }}">How do I analyze whether a stock is overvalued in Indian market?</a></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Feather icons
+        feather.replace();
+        
+        // Add loading state to form submission
+        const insightsForm = document.getElementById('insightsForm');
+        const insightsButton = document.getElementById('insightsButton');
+        
+        if (insightsForm) {
+            insightsForm.addEventListener('submit', function() {
+                insightsButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+                insightsButton.disabled = true;
+            });
+        }
+    });
+</script>
+{% endblock %}

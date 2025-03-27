@@ -1,0 +1,117 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .hero {
+        padding: 60px 0;
+        text-align: center;
+    }
+    
+    .features {
+        padding: 40px 0;
+    }
+    
+    .feature-card {
+        padding: 30px;
+        margin-bottom: 30px;
+        border-radius: 10px;
+        transition: transform 0.3s ease;
+    }
+    
+    .feature-card:hover {
+        transform: translateY(-10px);
+    }
+    
+    .feature-icon {
+        font-size: 40px;
+        margin-bottom: 20px;
+    }
+    
+    .cta {
+        padding: 60px 0;
+        text-align: center;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <div class="container">
+        <h1>Smart Financial Analyzer</h1>
+        <p class="lead">India-specific financial insights powered by AI</p>
+        <div class="mt-4">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">Explore Dashboard</a>
+            <a href="{{ url_for('insights') }}" class="btn btn-outline-secondary btn-lg ms-2">Ask a Question</a>
+        </div>
+    </div>
+</div>
+
+<div class="features">
+    <div class="container">
+        <h2 class="text-center mb-5">Key Features</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="file-text"></i>
+                    </div>
+                    <h3>India-Specific News</h3>
+                    <p>Get the latest financial news from Indian sources including RBI announcements, SEBI regulations, budget reports, and market updates.</p>
+                    <a href="{{ url_for('news') }}" class="btn btn-outline-primary">Browse News</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="trending-up"></i>
+                    </div>
+                    <h3>NSE & BSE Stock Analysis</h3>
+                    <p>Track and analyze stocks from National Stock Exchange and Bombay Stock Exchange with real-time data and AI-powered insights.</p>
+                    <a href="{{ url_for('stocks') }}" class="btn btn-outline-primary">Analyze Stocks</a>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="help-circle"></i>
+                    </div>
+                    <h3>Financial Q&A</h3>
+                    <p>Get answers to your financial questions with India-specific context, covering investments, taxation, market trends, and more.</p>
+                    <a href="{{ url_for('insights') }}" class="btn btn-outline-primary">Ask a Question</a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="bar-chart-2"></i>
+                    </div>
+                    <h3>Market Dashboard</h3>
+                    <p>Visualize market trends, sector performance, and get a comprehensive overview of Indian financial markets at a glance.</p>
+                    <a href="{{ url_for('dashboard') }}" class="btn btn-outline-primary">View Dashboard</a>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="feature-card">
+                    <div class="feature-icon">
+                        <i data-feather="book"></i>
+                    </div>
+                    <h3>Book Recommendations</h3>
+                    <p>Discover financial wisdom from expert-recommended books with insights specifically relevant to Indian investors and market conditions.</p>
+                    <a href="{{ url_for('books') }}" class="btn btn-outline-primary">Get Recommendations</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="cta">
+    <div class="container">
+        <h2>Ready to make smarter financial decisions?</h2>
+        <p class="lead">Start exploring the Indian financial landscape with AI-powered insights</p>
+        <a href="{{ url_for('dashboard') }}" class="btn btn-lg btn-primary mt-3">Get Started</a>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,347 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .stock-card {
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .stock-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .stock-price {
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+    
+    .stock-change {
+        font-size: 1.2rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    
+    .stock-change-positive {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .stock-change-negative {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+    
+    .stock-details {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .stock-detail-item {
+        flex: 1 1 25%;
+        min-width: 120px;
+        margin-bottom: 15px;
+    }
+    
+    .stock-detail-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .stock-detail-value {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .stock-news-item {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stock-news-item:last-child {
+        border-bottom: none;
+    }
+    
+    .analysis-card {
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+    }
+    
+    .stock-list {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+    }
+    
+    .stock-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .stock-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h2 mb-4">Stock Analysis</h1>
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        An error occurred while loading the stock information. Please try again later.
+    </div>
+    {% else %}
+    
+    <!-- Stock Search Form -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <form id="stockSearchForm" class="d-flex">
+                <input type="text" id="stockSymbol" name="symbol" class="form-control me-2" placeholder="Enter Stock Symbol (e.g., RELIANCE)" value="{{ selected_symbol or '' }}" required>
+                <select id="stockExchange" name="exchange" class="form-select me-2" style="width: 150px;">
+                    {% for exchange in exchanges %}
+                    <option value="{{ exchange }}" {% if selected_exchange == exchange %}selected{% endif %}>{{ exchange }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">
+                    <i data-feather="search"></i> Search
+                </button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Stock Info Column -->
+        <div class="col-md-8">
+            {% if stock_data %}
+            <!-- Stock Overview Card -->
+            <div class="stock-card">
+                <div class="stock-header">
+                    <div>
+                        <h3>{{ stock_data.name }} ({{ stock_data.symbol }})</h3>
+                        <div>{{ stock_data.exchange }} • {{ stock_data.sector }}</div>
+                    </div>
+                    <div class="text-end">
+                        <div class="stock-price">₹{{ "%.2f"|format(stock_data.current_price|float) }}</div>
+                        <div class="stock-change {{ 'stock-change-positive' if stock_data.day_change|float > 0 else 'stock-change-negative' }}">
+                            {{ "+" if stock_data.day_change|float > 0 else "" }}{{ "%.2f"|format(stock_data.day_change|float) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stock-details">
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">Volume</div>
+                        <div class="stock-detail-value">{{ '{:,.0f}'.format(stock_data.volume|float) }}</div>
+                    </div>
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">52 Week High</div>
+                        <div class="stock-detail-value">₹{{ "%.2f"|format(stock_data.high_52week|float) }}</div>
+                    </div>
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">52 Week Low</div>
+                        <div class="stock-detail-value">₹{{ "%.2f"|format(stock_data.low_52week|float) }}</div>
+                    </div>
+                    {% if stock_data.market_cap %}
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">Market Cap</div>
+                        <div class="stock-detail-value">₹{{ '{:,.0f}'.format(stock_data.market_cap|float / 10000000) }} Cr</div>
+                    </div>
+                    {% endif %}
+                    {% if stock_data.pe_ratio %}
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">P/E Ratio</div>
+                        <div class="stock-detail-value">{{ "%.2f"|format(stock_data.pe_ratio|float) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if stock_data.dividend_yield %}
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">Dividend Yield</div>
+                        <div class="stock-detail-value">{{ "%.2f"|format((stock_data.dividend_yield|float) * 100) }}%</div>
+                    </div>
+                    {% endif %}
+                    <div class="stock-detail-item">
+                        <div class="stock-detail-label">Last Updated</div>
+                        <div class="stock-detail-value">
+                            {% if stock_data.last_updated is string %}
+                                {{ stock_data.last_updated.split('T')[0] }} {{ stock_data.last_updated.split('T')[1].split('.')[0] }}
+                            {% else %}
+                                {{ stock_data.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Price Chart -->
+                <div class="chart-container">
+                    <canvas id="stockPriceChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- Stock Analysis Card -->
+            <div class="analysis-card">
+                <h3>AI Analysis</h3>
+                <div id="stockAnalysis">
+                    {{ stock_analysis|nl2br|safe }}
+                </div>
+            </div>
+            
+            <!-- Stock News Card -->
+            <div class="stock-card">
+                <h3>Related News</h3>
+                <div class="stock-news-container">
+                    {% for news in stock_news %}
+                    <div class="stock-news-item">
+                        <h5><a href="{{ news.url }}" target="_blank">{{ news.title }}</a></h5>
+                        <p>{{ news.summary[:150] }}{% if news.summary|length > 150 %}...{% endif %}</p>
+                        <small class="text-muted">
+                            {{ news.source }} • 
+                            {% if news.published_date is string %}
+                                {{ news.published_date.split('T')[0] }}
+                            {% else %}
+                                {{ news.published_date.strftime('%Y-%m-%d') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% else %}
+                    <p>No related news available for this stock.</p>
+                    {% endfor %}
+                </div>
+            </div>
+            {% else %}
+            <div class="alert alert-info">
+                Please enter a valid stock symbol to view its details.
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Sidebar Column -->
+        <div class="col-md-4">
+            <!-- Top Gainers Card -->
+            <div class="stock-card">
+                <h3>Top Gainers</h3>
+                <ul class="stock-list">
+                    {% for stock in trending_gainers %}
+                    <li class="stock-item">
+                        <div>
+                            <a href="{{ url_for('stocks', symbol=stock.symbol, exchange=stock.exchange) }}">
+                                {{ stock.symbol }}
+                            </a>
+                            <small class="text-muted">{{ stock.name }}</small>
+                        </div>
+                        <div>
+                            <span>₹{{ "%.2f"|format(stock.current_price|float) }}</span>
+                            <span class="stock-change-positive">+{{ "%.2f"|format(stock.day_change|float) }}%</span>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No data available</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            
+            <!-- Top Losers Card -->
+            <div class="stock-card">
+                <h3>Top Losers</h3>
+                <ul class="stock-list">
+                    {% for stock in trending_losers %}
+                    <li class="stock-item">
+                        <div>
+                            <a href="{{ url_for('stocks', symbol=stock.symbol, exchange=stock.exchange) }}">
+                                {{ stock.symbol }}
+                            </a>
+                            <small class="text-muted">{{ stock.name }}</small>
+                        </div>
+                        <div>
+                            <span>₹{{ "%.2f"|format(stock.current_price|float) }}</span>
+                            <span class="stock-change-negative">{{ "%.2f"|format(stock.day_change|float) }}%</span>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No data available</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Feather icons
+        feather.replace();
+        
+        {% if stock_data and historical_data %}
+        // Stock Price Chart
+        const stockCtx = document.getElementById('stockPriceChart').getContext('2d');
+        
+        // Prepare data for chart
+        const dates = [];
+        const prices = [];
+        
+        {% for point in historical_data %}
+        dates.push("{{ point.date }}");
+        prices.push({{ point.close }});
+        {% endfor %}
+        
+        const stockPriceChart = new Chart(stockCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: '{{ stock_data.symbol }} Price (₹)',
+                    data: prices,
+                    borderColor: {% if stock_data.day_change|float > 0 %}'#28a745'{% else %}'#dc3545'{% endif %},
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 2,
+                    pointRadius: 1,
+                    pointHoverRadius: 5,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+        {% endif %}
+    });
+</script>
+{% endblock %}

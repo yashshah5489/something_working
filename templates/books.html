@@ -1,0 +1,119 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .books-card {
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .search-container {
+        margin-bottom: 40px;
+    }
+    
+    .recommendations-container {
+        margin-top: 20px;
+    }
+    
+    .book-list {
+        margin-top: 30px;
+    }
+    
+    .book-item {
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 8px;
+        border-left: 4px solid #3498db;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <h1 class="h2 mb-4">Book Recommendations</h1>
+    
+    {% if error %}
+    <div class="alert alert-danger">
+        An error occurred while loading the books recommendations. Please try again later.
+    </div>
+    {% else %}
+    
+    <!-- Search Form -->
+    <div class="books-card search-container">
+        <h3 class="mb-3">Find Indian Financial Books</h3>
+        <form id="booksForm" method="get" action="{{ url_for('books') }}">
+            <div class="row">
+                <div class="col-md-5 mb-3">
+                    <label for="topic" class="form-label">Financial Topic</label>
+                    <input type="text" id="topic" name="topic" class="form-control" 
+                           placeholder="e.g., Retirement, Stock Market, Tax Planning" 
+                           value="{{ topic }}" required>
+                </div>
+                <div class="col-md-5 mb-3">
+                    <label for="goal" class="form-label">Financial Goal</label>
+                    <input type="text" id="goal" name="goal" class="form-control" 
+                           placeholder="e.g., Wealth Creation, Financial Freedom" 
+                           value="{{ goal }}" required>
+                </div>
+                <div class="col-md-2 d-flex align-items-end mb-3">
+                    <button class="btn btn-primary w-100" type="submit" id="recommendButton">
+                        <i data-feather="book"></i> Recommend
+                    </button>
+                </div>
+            </div>
+            <p class="text-muted">Enter your financial interests and goals to get personalized book recommendations relevant to Indian investors.</p>
+        </form>
+    </div>
+    
+    {% if recommendations %}
+    <!-- Recommendations Card -->
+    <div class="books-card recommendations-container">
+        <h3 class="mb-3">Your Personalized Recommendations</h3>
+        <div id="bookRecommendations">
+            {{ recommendations|nl2br|safe }}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Available Books -->
+    <div class="books-card book-list">
+        <h3 class="mb-3">Available Financial Books</h3>
+        <div class="row">
+            {% for book in available_books %}
+            <div class="col-md-6">
+                <div class="book-item">
+                    <h4>{{ book }}</h4>
+                    <p class="mb-0">
+                        <a href="{{ url_for('books', topic='Indian finance', goal=book.split(' by ')[0]) }}" class="btn btn-sm btn-outline-primary">
+                            Get insights about this book
+                        </a>
+                    </p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Feather icons
+        feather.replace();
+        
+        // Add loading state to form submission
+        const booksForm = document.getElementById('booksForm');
+        const recommendButton = document.getElementById('recommendButton');
+        
+        if (booksForm) {
+            booksForm.addEventListener('submit', function() {
+                recommendButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Loading...';
+                recommendButton.disabled = true;
+            });
+        }
+    });
+</script>
+{% endblock %}

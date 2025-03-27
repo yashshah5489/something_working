@@ -1,0 +1,256 @@
+/* Main Stylesheet for Smart Financial Analyzer */
+
+:root {
+    --primary-color: #3498db;
+    --primary-dark: #2980b9;
+    --secondary-color: #2ecc71;
+    --secondary-dark: #27ae60;
+    --danger-color: #e74c3c;
+    --warning-color: #f39c12;
+    --dark-bg: #1a1a2e;
+    --dark-bg-lighter: #16213e;
+    --dark-card-bg: #0f3460;
+    --text-color: #f1f1f1;
+    --text-color-muted: #a3a3a3;
+    --border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark Theme Base Styles */
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-color);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.container, .container-fluid {
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+    color: var(--text-color);
+    font-weight: 600;
+}
+
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+
+a:hover {
+    color: var(--primary-dark);
+    text-decoration: underline;
+}
+
+/* Navbar & Sidebar */
+.sidebar {
+    background-color: var(--dark-bg-lighter);
+    padding: 0;
+    min-height: 100vh;
+    position: sticky;
+    top: 0;
+    border-right: 1px solid var(--border-color);
+}
+
+.sidebar-sticky {
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 48px);
+    overflow-y: auto;
+}
+
+.sidebar-heading {
+    font-size: 1.2rem;
+    color: var(--primary-color);
+}
+
+.nav-link {
+    color: var(--text-color-muted);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s ease;
+}
+
+.nav-link:hover {
+    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.nav-link.active {
+    color: var(--primary-color);
+    font-weight: 600;
+    background-color: rgba(52, 152, 219, 0.1);
+    border-left: 3px solid var(--primary-color);
+}
+
+.nav-link i, .nav-link svg {
+    margin-right: 0.5rem;
+    width: 18px;
+    height: 18px;
+}
+
+/* Cards */
+.dashboard-card, .stock-card, .news-card, .insights-card, .books-card, .analysis-card, .feature-card {
+    background-color: var(--dark-card-bg);
+    border: 1px solid var(--border-color);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card {
+    background-color: var(--dark-card-bg);
+    border: 1px solid var(--border-color);
+}
+
+.card-header {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Buttons */
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover, .btn-primary:focus {
+    background-color: var(--primary-dark);
+    border-color: var(--primary-dark);
+}
+
+.btn-outline-primary {
+    color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover, .btn-outline-primary:focus {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-outline-primary.active {
+    background-color: var(--primary-color);
+    color: white;
+}
+
+.btn-secondary {
+    background-color: var(--secondary-color);
+    border-color: var(--secondary-color);
+}
+
+.btn-secondary:hover, .btn-secondary:focus {
+    background-color: var(--secondary-dark);
+    border-color: var(--secondary-dark);
+}
+
+/* Forms */
+.form-control, .form-select {
+    background-color: var(--dark-bg-lighter);
+    border: 1px solid var(--border-color);
+    color: var(--text-color);
+}
+
+.form-control:focus, .form-select:focus {
+    background-color: var(--dark-bg-lighter);
+    color: var(--text-color);
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.25rem rgba(52, 152, 219, 0.25);
+}
+
+.form-control::placeholder, .form-select::placeholder {
+    color: var(--text-color-muted);
+}
+
+/* Alerts */
+.alert-info {
+    background-color: rgba(52, 152, 219, 0.2);
+    border-color: rgba(52, 152, 219, 0.3);
+    color: #85c1e9;
+}
+
+.alert-success {
+    background-color: rgba(46, 204, 113, 0.2);
+    border-color: rgba(46, 204, 113, 0.3);
+    color: #82e0aa;
+}
+
+.alert-warning {
+    background-color: rgba(243, 156, 18, 0.2);
+    border-color: rgba(243, 156, 18, 0.3);
+    color: #f4d03f;
+}
+
+.alert-danger {
+    background-color: rgba(231, 76, 60, 0.2);
+    border-color: rgba(231, 76, 60, 0.3);
+    color: #f5b7b1;
+}
+
+/* Tables */
+.table {
+    color: var(--text-color);
+    border-color: var(--border-color);
+}
+
+.table thead th {
+    border-bottom: 2px solid var(--border-color);
+    background-color: rgba(0, 0, 0, 0.2);
+}
+
+.table tbody td {
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Footer */
+.footer {
+    margin-top: auto;
+    padding: 1rem 0;
+    background-color: var(--dark-bg-lighter);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Utilities */
+.text-muted {
+    color: var(--text-color-muted) !important;
+}
+
+.border {
+    border-color: var(--border-color) !important;
+}
+
+/* Chart Styling */
+canvas {
+    background-color: transparent !important;
+}
+
+/* Helper Classes */
+.stock-change-positive {
+    color: var(--secondary-color) !important;
+}
+
+.stock-change-negative {
+    color: var(--danger-color) !important;
+}
+
+/* Make content area responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        position: static;
+        min-height: auto;
+    }
+    
+    .sidebar-sticky {
+        height: auto;
+        position: static;
+    }
+    
+    .nav-link {
+        padding: 0.5rem 1rem;
+    }
+}
