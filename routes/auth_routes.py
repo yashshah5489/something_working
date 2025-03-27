@@ -185,6 +185,41 @@ def change_password():
     flash('Password updated successfully', 'success')
     return redirect(url_for('auth.profile'))
 
+@auth_bp.route('/update-preferences', methods=['POST'])
+@login_required
+def update_preferences():
+    risk_profile = request.form.get('risk_profile', 'Moderate')
+    investment_horizon = request.form.get('investment_horizon', 'Medium Term')
+    dark_mode = 'dark_mode' in request.form
+    
+    # Get favorite sectors (will be a list if multiple selected, or a single value if one selected)
+    favorite_sectors = request.form.getlist('favorite_sectors')
+    
+    # Notification settings
+    email_alerts = 'email_alerts' in request.form
+    price_alerts = 'price_alerts' in request.form
+    news_alerts = 'news_alerts' in request.form
+    
+    # Update user preferences
+    db = g.db
+    update_data = {
+        'preferences.risk_profile': risk_profile,
+        'preferences.investment_horizon': investment_horizon,
+        'preferences.dark_mode': dark_mode,
+        'preferences.favorite_sectors': favorite_sectors,
+        'preferences.notification_settings.email_alerts': email_alerts,
+        'preferences.notification_settings.price_alerts': price_alerts,
+        'preferences.notification_settings.news_alerts': news_alerts
+    }
+    
+    db.users.update_one(
+        {'_id': current_user.id},
+        {'$set': update_data}
+    )
+    
+    flash('Investment preferences updated successfully', 'success')
+    return redirect(url_for('auth.profile'))
+
 # Set up database reference
 @auth_bp.before_request
 def before_request():

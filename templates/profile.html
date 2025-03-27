@@ -1,0 +1,154 @@
+{% extends 'layout.html' %}
+
+{% block title %}User Profile - Smart Financial Analyzer{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-4">
+        <div class="card bg-dark text-light border-secondary mb-4">
+            <div class="card-header bg-primary">
+                <h4 class="mb-0">Profile Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <div class="profile-pic-container mx-auto mb-3">
+                        <i class="fas fa-user-circle fa-5x"></i>
+                    </div>
+                    <h5>{{ current_user.username }}</h5>
+                    <p class="text-muted">Member since {{ current_user.created_at.strftime('%d %b, %Y') }}</p>
+                </div>
+                
+                <form method="POST" action="{{ url_for('auth.profile') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <input type="text" class="form-control" id="username" name="username" value="{{ current_user.username }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <input type="email" class="form-control" id="email" name="email" value="{{ current_user.email }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="default_market" class="form-label">Default Market</label>
+                        <select class="form-select" id="default_market" name="default_market">
+                            <option value="NSE" {% if current_user.preferences.get('default_market') == 'NSE' %}selected{% endif %}>NSE (National Stock Exchange)</option>
+                            <option value="BSE" {% if current_user.preferences.get('default_market') == 'BSE' %}selected{% endif %}>BSE (Bombay Stock Exchange)</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="dark_mode" name="dark_mode" {% if current_user.preferences.get('dark_mode', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="dark_mode">Dark Mode</label>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Update Profile</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <div class="card bg-dark text-light border-secondary mb-4">
+            <div class="card-header bg-primary">
+                <h4 class="mb-0">Investment Preferences</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.update_preferences') }}">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="risk_profile" class="form-label">Risk Profile</label>
+                            <select class="form-select" id="risk_profile" name="risk_profile">
+                                <option value="Conservative" {% if current_user.preferences.get('risk_profile') == 'Conservative' %}selected{% endif %}>Conservative</option>
+                                <option value="Moderate" {% if current_user.preferences.get('risk_profile') == 'Moderate' %}selected{% endif %}>Moderate</option>
+                                <option value="Aggressive" {% if current_user.preferences.get('risk_profile') == 'Aggressive' %}selected{% endif %}>Aggressive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="investment_horizon" class="form-label">Investment Horizon</label>
+                            <select class="form-select" id="investment_horizon" name="investment_horizon">
+                                <option value="Short Term" {% if current_user.preferences.get('investment_horizon') == 'Short Term' %}selected{% endif %}>Short Term (&lt; 1 year)</option>
+                                <option value="Medium Term" {% if current_user.preferences.get('investment_horizon') == 'Medium Term' %}selected{% endif %}>Medium Term (1-5 years)</option>
+                                <option value="Long Term" {% if current_user.preferences.get('investment_horizon') == 'Long Term' %}selected{% endif %}>Long Term (&gt; 5 years)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Favorite Sectors</label>
+                        <div class="row">
+                            {% for sector in ['IT', 'Banking', 'Pharma', 'FMCG', 'Auto', 'Energy', 'Infrastructure', 'Realty'] %}
+                            <div class="col-md-3 col-sm-6 mb-2">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="sector_{{ sector }}" name="favorite_sectors" value="{{ sector }}" 
+                                        {% if sector in current_user.preferences.get('favorite_sectors', []) %}checked{% endif %}>
+                                    <label class="form-check-label" for="sector_{{ sector }}">{{ sector }}</label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Notification Settings</label>
+                        <div class="row">
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="email_alerts" name="email_alerts" 
+                                        {% if current_user.preferences.get('notification_settings', {}).get('email_alerts', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="email_alerts">Email Alerts</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="price_alerts" name="price_alerts"
+                                        {% if current_user.preferences.get('notification_settings', {}).get('price_alerts', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="price_alerts">Price Alerts</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4 mb-2">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="news_alerts" name="news_alerts"
+                                        {% if current_user.preferences.get('notification_settings', {}).get('news_alerts', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="news_alerts">News Alerts</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Save Preferences</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="card bg-dark text-light border-secondary">
+            <div class="card-header bg-primary">
+                <h4 class="mb-0">Change Password</h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.change_password') }}">
+                    <div class="mb-3">
+                        <label for="current_password" class="form-label">Current Password</label>
+                        <input type="password" class="form-control" id="current_password" name="current_password" required>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="new_password" class="form-label">New Password</label>
+                            <input type="password" class="form-control" id="new_password" name="new_password" required minlength="8">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="confirm_password" class="form-label">Confirm New Password</label>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Change Password</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

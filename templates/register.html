@@ -1,0 +1,82 @@
+{% extends 'layout.html' %}
+
+{% block title %}Register - Smart Financial Analyzer{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card bg-dark text-light border-secondary">
+            <div class="card-header bg-primary">
+                <h3 class="text-center mb-0">Create Account</h3>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('auth.register') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Username</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-user"></i></span>
+                            <input type="text" class="form-control" id="username" name="username" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-envelope"></i></span>
+                            <input type="email" class="form-control" id="email" name="email" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-key"></i></span>
+                            <input type="password" class="form-control" id="password" name="password" required minlength="8">
+                        </div>
+                        <small class="form-text text-muted">Password must be at least 8 characters</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="confirm_password" class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-check-double"></i></span>
+                            <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Investment Preferences</label>
+                        <div class="card bg-dark border-secondary mb-2">
+                            <div class="card-body py-2">
+                                <div class="mb-2">
+                                    <label for="default_market" class="form-label">Preferred Market</label>
+                                    <select class="form-select" id="default_market" name="default_market">
+                                        <option value="NSE" selected>NSE (National Stock Exchange)</option>
+                                        <option value="BSE">BSE (Bombay Stock Exchange)</option>
+                                    </select>
+                                </div>
+                                <div class="mb-2">
+                                    <label class="form-label">Risk Profile</label>
+                                    <select class="form-select" id="risk_profile" name="risk_profile">
+                                        <option value="Conservative">Conservative</option>
+                                        <option value="Moderate" selected>Moderate</option>
+                                        <option value="Aggressive">Aggressive</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" class="form-check-input" id="terms" name="terms" required>
+                        <label class="form-check-label" for="terms">I agree to the <a href="#" class="text-primary">Terms of Service</a> and <a href="#" class="text-primary">Privacy Policy</a></label>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary">Create Account</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center">
+                <p class="mb-0">Already have an account? <a href="{{ url_for('auth.login') }}" class="text-primary">Log in here</a></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
