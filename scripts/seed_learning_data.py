@@ -2,15 +2,82 @@ import sys
 import os
 import logging
 from datetime import datetime, timedelta
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+import json
 
 # Add the project directory to the Python path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-# Import the necessary models after setting the path
-from models import LearningResource, LearningPath, DailyTip
-from app import db, app
+# Use direct database connection to avoid circular imports
+from sqlalchemy import create_engine, Column, Integer, String, Float, Boolean, Text, DateTime, ForeignKey, JSON, UniqueConstraint
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, relationship
+import os
+
+# Configure the database
+DATABASE_URL = os.environ.get("DATABASE_URL")
+engine = create_engine(DATABASE_URL)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
+
+# Define models directly here to avoid circular imports
+class LearningResource(Base):
+    """Financial learning resources"""
+    __tablename__ = 'learning_resources'
+    
+    id = Column(Integer, primary_key=True)
+    title = Column(String(200), nullable=False)
+    description = Column(Text, nullable=False)
+    content = Column(Text, nullable=False)  # Could be text content or embedded links
+    resource_type = Column(String(20), nullable=False)  # article, video, quiz, infographic
+    topic = Column(String(100), nullable=False, index=True)  # Topic categorization
+    subtopic = Column(String(100))  # More specific categorization
+    difficulty_level = Column(String(20), nullable=False, default="Beginner")  # Beginner, Intermediate, Advanced
+    duration_minutes = Column(Integer, default=5)  # Estimated time to complete
+    prerequisites = Column(JSON, default=[])  # List of prerequisite resource IDs
+    thumbnail_url = Column(String(500))
+    external_url = Column(String(500))  # External resource link
+    is_premium = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<LearningResource {self.title}>"
+
+class LearningPath(Base):
+    """Organized learning paths for different financial topics"""
+    __tablename__ = 'learning_paths'
+    
+    id = Column(Integer, primary_key=True)
+    name = Column(String(100), nullable=False, unique=True)
+    description = Column(Text, nullable=False)
+    target_audience = Column(String(50), nullable=False)  # Beginners, Professionals, etc.
+    difficulty_level = Column(String(20), nullable=False)
+    estimated_days = Column(Integer, default=30)
+    topics_covered = Column(JSON, default=[])  # List of topics
+    resource_sequence = Column(JSON, default=[])  # Ordered list of resource IDs
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<LearningPath {self.name}>"
+
+class DailyTip(Base):
+    """Daily financial tips for users"""
+    __tablename__ = 'daily_tips'
+    
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'), nullable=True)  # If NULL, it's a global tip
+    tip_text = Column(Text, nullable=False)
+    tip_title = Column(String(200), nullable=False)
+    tip_category = Column(String(50), nullable=False)  # investing, saving, tax, etc.
+    tip_difficulty = Column(String(20), default="Beginner")  # Beginner, Intermediate, Advanced
+    is_personalized = Column(Boolean, default=False)
+    read = Column(Boolean, default=False)  # Track if user has read this tip
+    saved = Column(Boolean, default=False)  # Track if user has saved this tip
+    created_at = Column(DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f"<DailyTip {self.tip_title}>"
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -629,7 +696,7 @@ def seed_daily_tips():
         },
         {
             'tip_title': 'Look Beyond Past Performance',
-            'tip_text': 'While historical returns are important, they don't guarantee future performance. Evaluate investments based on fundamentals, management quality, and future prospects.',
+            'tip_text': 'While historical returns are important, they don\'t guarantee future performance. Evaluate investments based on fundamentals, management quality, and future prospects.',
             'tip_category': 'investing',
             'tip_difficulty': 'Intermediate',
             'is_personalized': False
@@ -681,12 +748,137 @@ def run():
     """Main function to seed the database"""
     logger.info("Starting database seeding...")
     
-    with app.app_context():
-        seed_learning_resources()
-        seed_learning_paths()
-        seed_daily_tips()
+    # Create a database session
+    session = SessionLocal()
     
-    logger.info("Database seeding completed successfully!")
+    try:
+        # Create tables if they don't exist
+        Base.metadata.create_all(engine)
+        
+        # Check if we already have learning resources
+        lr_count = session.query(LearningResource).count()
+        if lr_count > 0:
+            logger.info(f"Found {lr_count} existing resources, skipping seed.")
+        else:
+            # Beginner Resources
+            for resource_data in beginner_resources:
+                resource = LearningResource(**resource_data)
+                session.add(resource)
+            
+            # Intermediate Resources
+            for resource_data in intermediate_resources:
+                resource = LearningResource(**resource_data)
+                session.add(resource)
+            
+            # Advanced Resources
+            for resource_data in advanced_resources:
+                resource = LearningResource(**resource_data)
+                session.add(resource)
+                
+            session.commit()
+            logger.info(f"Added {len(beginner_resources) + len(intermediate_resources) + len(advanced_resources)} learning resources")
+        
+        # Check if we already have learning paths
+        lp_count = session.query(LearningPath).count()
+        if lp_count > 0:
+            logger.info(f"Found {lp_count} existing learning paths, skipping seed.")
+        else:
+            # Get resources for paths
+            stock_basics = session.query(LearningResource).filter_by(topic='Stock Market Basics', difficulty_level='Beginner').first()
+            mutual_funds = session.query(LearningResource).filter_by(topic='Mutual Funds', difficulty_level='Beginner').first()
+            tax_planning = session.query(LearningResource).filter_by(topic='Tax Planning', difficulty_level='Beginner').first()
+            risk_management = session.query(LearningResource).filter_by(topic='Risk Management', difficulty_level='Beginner').first()
+            
+            # Intermediate resources
+            fundamental_analysis = session.query(LearningResource).filter_by(topic='Fundamental Analysis', difficulty_level='Intermediate').first()
+            portfolio_management = session.query(LearningResource).filter_by(topic='Portfolio Management', difficulty_level='Intermediate').first()
+            
+            # Advanced resources
+            advanced_trading = session.query(LearningResource).filter_by(topic='Advanced Trading', difficulty_level='Advanced').first()
+            
+            # Get resource IDs (safely)
+            resource_ids = []
+            if stock_basics:
+                resource_ids.append(stock_basics.id)
+            if mutual_funds:
+                resource_ids.append(mutual_funds.id)
+            if risk_management:
+                resource_ids.append(risk_management.id)
+            if tax_planning:
+                resource_ids.append(tax_planning.id)
+            
+            intermediate_ids = []
+            if fundamental_analysis:
+                intermediate_ids.append(fundamental_analysis.id)
+            if portfolio_management:
+                intermediate_ids.append(portfolio_management.id)
+            # Add beginner resources to intermediate path too
+            intermediate_ids.extend(resource_ids)
+            
+            advanced_ids = []
+            if advanced_trading:
+                advanced_ids.append(advanced_trading.id)
+            # Add some intermediate resources to advanced path
+            if fundamental_analysis:
+                advanced_ids.append(fundamental_analysis.id)
+            if portfolio_management:
+                advanced_ids.append(portfolio_management.id)
+            
+            # Create learning paths
+            beginner_path = LearningPath(
+                name="Investment Basics",
+                description="A comprehensive introduction to investing in the Indian market, covering the fundamentals that every new investor should know.",
+                target_audience="New Investors",
+                difficulty_level="Beginner",
+                estimated_days=15,
+                topics_covered=["Stock Market Basics", "Mutual Funds", "Risk Management", "Tax Planning"],
+                resource_sequence=resource_ids
+            )
+            
+            intermediate_path = LearningPath(
+                name="Intermediate Investing",
+                description="Build on your investing knowledge with more advanced concepts, analysis techniques, and portfolio strategies.",
+                target_audience="Investors with Basic Knowledge",
+                difficulty_level="Intermediate",
+                estimated_days=20,
+                topics_covered=["Fundamental Analysis", "Portfolio Management", "Stock Market Basics", "Mutual Funds"],
+                resource_sequence=intermediate_ids
+            )
+            
+            advanced_path = LearningPath(
+                name="Advanced Trading Strategies",
+                description="Master sophisticated trading and investment strategies for experienced investors looking to optimize returns.",
+                target_audience="Experienced Investors",
+                difficulty_level="Advanced",
+                estimated_days=25,
+                topics_covered=["Advanced Trading", "Fundamental Analysis", "Portfolio Management"],
+                resource_sequence=advanced_ids
+            )
+            
+            session.add_all([beginner_path, intermediate_path, advanced_path])
+            session.commit()
+            logger.info("Added 3 learning paths")
+        
+        # Check if we already have daily tips
+        tip_count = session.query(DailyTip).count()
+        if tip_count > 0:
+            logger.info(f"Found {tip_count} existing tips, skipping seed.")
+        else:
+            # Add tips to database
+            for tip_data in general_tips:
+                tip = DailyTip(**tip_data)
+                session.add(tip)
+            
+            session.commit()
+            logger.info(f"Added {len(general_tips)} daily tips")
+        
+        logger.info("Database seeding completed successfully!")
+    except Exception as e:
+        session.rollback()
+        logger.error(f"Error seeding database: {e}")
+        raise
+    finally:
+        session.close()
 
 if __name__ == "__main__":
     run()
