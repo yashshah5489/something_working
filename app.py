@@ -26,6 +26,17 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 db = SQLAlchemy(model_class=Base)
 db.init_app(app)
 
+# Initialize Flask-Login
+from flask_login import LoginManager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'auth.login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    from models import User
+    return User.query.get(int(user_id))
+
 with app.app_context():
     # Import models here to ensure they're registered with SQLAlchemy
     import models  # noqa: F401
@@ -37,8 +48,19 @@ with app.app_context():
     from services.rag_service import init_rag_service
     init_rag_service()
 
-# Import routes after app is created to avoid circular imports
+# Register learning helper functions
+from utils.learning_helpers import register_learning_helpers
+register_learning_helpers(app)
+
+# Register blueprints
+from routes.auth_routes import auth_bp
+from routes.learning_routes import learning_bp
+# Import main routes
 from routes import *
+
+# Register blueprints with the app
+app.register_blueprint(auth_bp)
+app.register_blueprint(learning_bp)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

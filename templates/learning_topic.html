@@ -1,0 +1,322 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ topic }} Learning Resources - Smart Financial Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('learning.home') }}">Learning</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ topic }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="mb-0">{{ topic }}</h1>
+                <div class="dropdown">
+                    <button class="btn btn-outline-primary dropdown-toggle" type="button" id="difficultyDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-signal me-2"></i>Filter by Difficulty
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="difficultyDropdown">
+                        <li><a class="dropdown-item" href="#beginner">Beginner</a></li>
+                        <li><a class="dropdown-item" href="#intermediate">Intermediate</a></li>
+                        <li><a class="dropdown-item" href="#advanced">Advanced</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="#all">Show All</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Topic Introduction -->
+    <div class="row mb-5">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h2 class="card-title mb-3">About {{ topic }}</h2>
+                            <p class="card-text lead">
+                                {% if topic == 'Stock Market Basics' %}
+                                Learn the fundamentals of how stock markets work, how to interpret market indices, and understand the basics of stock trading in India.
+                                {% elif topic == 'Mutual Funds' %}
+                                Explore different types of mutual funds, understand their fee structures, and learn how to select funds that align with your financial goals.
+                                {% elif topic == 'Tax Planning' %}
+                                Discover strategies to optimize your tax savings within the Indian tax system and make the most of available deductions and exemptions.
+                                {% elif topic == 'Risk Management' %}
+                                Learn how to assess risk in your investments and implement strategies to protect your portfolio against market volatility.
+                                {% else %}
+                                Expand your knowledge on {{ topic }} with our curated resources designed for various expertise levels.
+                                {% endif %}
+                            </p>
+                            <div class="mt-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-success me-2">Beginner</span>
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ beginner_resources|length * 25 }}%;" aria-valuenow="{{ beginner_resources|length * 25 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="ms-2 small text-muted">{{ beginner_resources|length }} resources</span>
+                                </div>
+                                <div class="d-flex align-items-center mb-2">
+                                    <span class="badge bg-info me-2">Intermediate</span>
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ intermediate_resources|length * 25 }}%;" aria-valuenow="{{ intermediate_resources|length * 25 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="ms-2 small text-muted">{{ intermediate_resources|length }} resources</span>
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-warning me-2">Advanced</span>
+                                    <div class="progress flex-grow-1" style="height: 6px;">
+                                        <div class="progress-bar bg-warning" role="progressbar" style="width: {{ advanced_resources|length * 25 }}%;" aria-valuenow="{{ advanced_resources|length * 25 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <span class="ms-2 small text-muted">{{ advanced_resources|length }} resources</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 d-none d-md-block">
+                            <div class="topic-icon text-center my-4">
+                                {% if topic == 'Stock Market Basics' %}
+                                <i class="fas fa-chart-line fa-7x text-success"></i>
+                                {% elif topic == 'Mutual Funds' %}
+                                <i class="fas fa-hand-holding-usd fa-7x text-primary"></i>
+                                {% elif topic == 'Tax Planning' %}
+                                <i class="fas fa-calculator fa-7x text-warning"></i>
+                                {% elif topic == 'Risk Management' %}
+                                <i class="fas fa-umbrella fa-7x text-info"></i>
+                                {% else %}
+                                <i class="fas fa-book-open fa-7x text-secondary"></i>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Beginner Resources -->
+    {% if beginner_resources %}
+    <div id="beginner" class="row mb-5">
+        <div class="col-12 mb-3">
+            <h2><span class="badge bg-success me-2">Beginner</span>Resources</h2>
+            <p class="text-muted">Perfect for those new to {{ topic }}</p>
+        </div>
+        
+        {% for resource in beginner_resources %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark border-secondary hover-card">
+                {% if resource.thumbnail_url %}
+                <img src="{{ resource.thumbnail_url }}" class="card-img-top" alt="{{ resource.title }}">
+                {% else %}
+                <div class="card-img-placeholder bg-secondary d-flex align-items-center justify-content-center" style="height: 120px;">
+                    {% if resource.resource_type == 'article' %}
+                    <i class="fas fa-file-alt fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'video' %}
+                    <i class="fas fa-video fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'quiz' %}
+                    <i class="fas fa-question-circle fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'infographic' %}
+                    <i class="fas fa-chart-bar fa-3x text-light"></i>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="badge {% if resource.resource_type == 'article' %}bg-info{% elif resource.resource_type == 'video' %}bg-danger{% elif resource.resource_type == 'quiz' %}bg-warning{% else %}bg-success{% endif %}">
+                            {% if resource.resource_type == 'article' %}
+                            <i class="fas fa-file-alt me-1"></i>Article
+                            {% elif resource.resource_type == 'video' %}
+                            <i class="fas fa-video me-1"></i>Video
+                            {% elif resource.resource_type == 'quiz' %}
+                            <i class="fas fa-question-circle me-1"></i>Quiz
+                            {% elif resource.resource_type == 'infographic' %}
+                            <i class="fas fa-chart-bar me-1"></i>Infographic
+                            {% endif %}
+                        </span>
+                        {% set progress = get_resource_progress(current_user.id, resource.id) %}
+                        {% if progress and progress.is_completed %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Completed</span>
+                        {% elif progress and progress.completion_percentage > 0 %}
+                        <span class="badge bg-info"><i class="fas fa-spinner me-1"></i>{{ progress.completion_percentage }}% done</span>
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title">{{ resource.title }}</h5>
+                    <p class="card-text small">{{ resource.description }}</p>
+                </div>
+                <div class="card-footer bg-dark border-secondary d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="far fa-clock me-1"></i>{{ resource.duration_minutes }} min</small>
+                    <a href="{{ url_for('learning.resource', resource_id=resource.id) }}" class="btn btn-sm btn-outline-primary">Learn Now</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Intermediate Resources -->
+    {% if intermediate_resources %}
+    <div id="intermediate" class="row mb-5">
+        <div class="col-12 mb-3">
+            <h2><span class="badge bg-info me-2">Intermediate</span>Resources</h2>
+            <p class="text-muted">For those with basic knowledge seeking deeper understanding</p>
+        </div>
+        
+        {% for resource in intermediate_resources %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark border-secondary hover-card">
+                {% if resource.thumbnail_url %}
+                <img src="{{ resource.thumbnail_url }}" class="card-img-top" alt="{{ resource.title }}">
+                {% else %}
+                <div class="card-img-placeholder bg-secondary d-flex align-items-center justify-content-center" style="height: 120px;">
+                    {% if resource.resource_type == 'article' %}
+                    <i class="fas fa-file-alt fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'video' %}
+                    <i class="fas fa-video fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'quiz' %}
+                    <i class="fas fa-question-circle fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'infographic' %}
+                    <i class="fas fa-chart-bar fa-3x text-light"></i>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="badge {% if resource.resource_type == 'article' %}bg-info{% elif resource.resource_type == 'video' %}bg-danger{% elif resource.resource_type == 'quiz' %}bg-warning{% else %}bg-success{% endif %}">
+                            {% if resource.resource_type == 'article' %}
+                            <i class="fas fa-file-alt me-1"></i>Article
+                            {% elif resource.resource_type == 'video' %}
+                            <i class="fas fa-video me-1"></i>Video
+                            {% elif resource.resource_type == 'quiz' %}
+                            <i class="fas fa-question-circle me-1"></i>Quiz
+                            {% elif resource.resource_type == 'infographic' %}
+                            <i class="fas fa-chart-bar me-1"></i>Infographic
+                            {% endif %}
+                        </span>
+                        {% set progress = get_resource_progress(current_user.id, resource.id) %}
+                        {% if progress and progress.is_completed %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Completed</span>
+                        {% elif progress and progress.completion_percentage > 0 %}
+                        <span class="badge bg-info"><i class="fas fa-spinner me-1"></i>{{ progress.completion_percentage }}% done</span>
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title">{{ resource.title }}</h5>
+                    <p class="card-text small">{{ resource.description }}</p>
+                </div>
+                <div class="card-footer bg-dark border-secondary d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="far fa-clock me-1"></i>{{ resource.duration_minutes }} min</small>
+                    <a href="{{ url_for('learning.resource', resource_id=resource.id) }}" class="btn btn-sm btn-outline-primary">Learn Now</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Advanced Resources -->
+    {% if advanced_resources %}
+    <div id="advanced" class="row mb-5">
+        <div class="col-12 mb-3">
+            <h2><span class="badge bg-warning me-2">Advanced</span>Resources</h2>
+            <p class="text-muted">In-depth content for experienced learners</p>
+        </div>
+        
+        {% for resource in advanced_resources %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100 bg-dark border-secondary hover-card">
+                {% if resource.thumbnail_url %}
+                <img src="{{ resource.thumbnail_url }}" class="card-img-top" alt="{{ resource.title }}">
+                {% else %}
+                <div class="card-img-placeholder bg-secondary d-flex align-items-center justify-content-center" style="height: 120px;">
+                    {% if resource.resource_type == 'article' %}
+                    <i class="fas fa-file-alt fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'video' %}
+                    <i class="fas fa-video fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'quiz' %}
+                    <i class="fas fa-question-circle fa-3x text-light"></i>
+                    {% elif resource.resource_type == 'infographic' %}
+                    <i class="fas fa-chart-bar fa-3x text-light"></i>
+                    {% endif %}
+                </div>
+                {% endif %}
+                <div class="card-body">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="badge {% if resource.resource_type == 'article' %}bg-info{% elif resource.resource_type == 'video' %}bg-danger{% elif resource.resource_type == 'quiz' %}bg-warning{% else %}bg-success{% endif %}">
+                            {% if resource.resource_type == 'article' %}
+                            <i class="fas fa-file-alt me-1"></i>Article
+                            {% elif resource.resource_type == 'video' %}
+                            <i class="fas fa-video me-1"></i>Video
+                            {% elif resource.resource_type == 'quiz' %}
+                            <i class="fas fa-question-circle me-1"></i>Quiz
+                            {% elif resource.resource_type == 'infographic' %}
+                            <i class="fas fa-chart-bar me-1"></i>Infographic
+                            {% endif %}
+                        </span>
+                        {% set progress = get_resource_progress(current_user.id, resource.id) %}
+                        {% if progress and progress.is_completed %}
+                        <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Completed</span>
+                        {% elif progress and progress.completion_percentage > 0 %}
+                        <span class="badge bg-info"><i class="fas fa-spinner me-1"></i>{{ progress.completion_percentage }}% done</span>
+                        {% endif %}
+                    </div>
+                    <h5 class="card-title">{{ resource.title }}</h5>
+                    <p class="card-text small">{{ resource.description }}</p>
+                </div>
+                <div class="card-footer bg-dark border-secondary d-flex justify-content-between align-items-center">
+                    <small class="text-muted"><i class="far fa-clock me-1"></i>{{ resource.duration_minutes }} min</small>
+                    <a href="{{ url_for('learning.resource', resource_id=resource.id) }}" class="btn btn-sm btn-outline-primary">Learn Now</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+    
+    <!-- Empty State -->
+    {% if not beginner_resources and not intermediate_resources and not advanced_resources %}
+    <div class="row">
+        <div class="col-12 text-center py-5">
+            <div class="empty-state mb-4">
+                <i class="fas fa-book fa-5x text-muted mb-3"></i>
+                <h3>No resources available yet</h3>
+                <p class="text-muted">We're working on adding {{ topic }} resources soon!</p>
+            </div>
+            <a href="{{ url_for('learning.home') }}" class="btn btn-primary">Browse other topics</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Smooth scroll to anchors
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            if (targetId === '#all') {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+                return;
+            }
+            
+            const target = document.querySelector(targetId);
+            if (target) {
+                target.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

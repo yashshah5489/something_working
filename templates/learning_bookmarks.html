@@ -1,0 +1,272 @@
+{% extends 'layout.html' %}
+
+{% block title %}My Bookmarked Resources - Smart Financial Analyzer{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('learning.home') }}">Learning</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">My Bookmarks</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <h1 class="mb-0">My Bookmarked Resources</h1>
+            <p class="text-muted">Resources you've saved for later</p>
+        </div>
+        <div class="col-md-4 text-md-end">
+            <a href="{{ url_for('learning.home') }}" class="btn btn-outline-primary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Learning
+            </a>
+        </div>
+    </div>
+    
+    <!-- Bookmarks List -->
+    {% if bookmarks %}
+    <div class="row">
+        <div class="col-12">
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-dark">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0"><i class="fas fa-bookmark me-2"></i>Your Saved Resources</h5>
+                        <div class="input-group" style="max-width: 250px;">
+                            <span class="input-group-text bg-dark border-secondary text-light">
+                                <i class="fas fa-search"></i>
+                            </span>
+                            <input type="text" id="bookmarkSearch" class="form-control bg-dark border-secondary text-light" placeholder="Search bookmarks...">
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover mb-0" id="bookmarksTable">
+                            <thead>
+                                <tr>
+                                    <th>Resource</th>
+                                    <th>Type</th>
+                                    <th>Topic</th>
+                                    <th>Duration</th>
+                                    <th>Notes</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for bookmark in bookmarks %}
+                                <tr>
+                                    <td>
+                                        <a href="{{ url_for('learning.resource', resource_id=bookmark.resource.id) }}" class="text-decoration-none text-light">
+                                            {{ bookmark.resource.title }}
+                                        </a>
+                                        <div class="small text-muted">
+                                            {% set progress = get_resource_progress(current_user.id, bookmark.resource.id) %}
+                                            {% if progress and progress.is_completed %}
+                                            <span class="text-success"><i class="fas fa-check-circle me-1"></i>Completed</span>
+                                            {% elif progress and progress.completion_percentage > 0 %}
+                                            <div class="progress mt-1" style="height: 5px; width: 100px;">
+                                                <div class="progress-bar bg-info" role="progressbar" style="width: {{ progress.completion_percentage }}%;" aria-valuenow="{{ progress.completion_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                            </div>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if bookmark.resource.resource_type == 'article' %}
+                                        <span class="badge bg-info"><i class="fas fa-file-alt me-1"></i>Article</span>
+                                        {% elif bookmark.resource.resource_type == 'video' %}
+                                        <span class="badge bg-danger"><i class="fas fa-video me-1"></i>Video</span>
+                                        {% elif bookmark.resource.resource_type == 'quiz' %}
+                                        <span class="badge bg-warning"><i class="fas fa-question-circle me-1"></i>Quiz</span>
+                                        {% elif bookmark.resource.resource_type == 'infographic' %}
+                                        <span class="badge bg-success"><i class="fas fa-chart-bar me-1"></i>Infographic</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('learning.topic', topic=bookmark.resource.topic|lower|replace(' ', '-')) }}" class="text-decoration-none">
+                                            <span class="badge bg-secondary">{{ bookmark.resource.topic }}</span>
+                                        </a>
+                                    </td>
+                                    <td>{{ bookmark.resource.duration_minutes }} min</td>
+                                    <td>
+                                        {% if bookmark.notes %}
+                                        <button class="btn btn-sm btn-outline-info view-notes" data-bs-toggle="modal" data-bs-target="#notesModal" data-notes="{{ bookmark.notes }}" data-title="{{ bookmark.resource.title }}">
+                                            <i class="fas fa-sticky-note me-1"></i>View Notes
+                                        </button>
+                                        {% else %}
+                                        <span class="text-muted small">No notes</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('learning.resource', resource_id=bookmark.resource.id) }}" class="btn btn-sm btn-outline-primary me-1">
+                                            <i class="fas fa-book-open me-1"></i>View
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-danger remove-bookmark" data-bookmark-id="{{ bookmark.id }}">
+                                            <i class="fas fa-trash-alt"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bookmark Stats -->
+    <div class="row">
+        <div class="col-md-4 mb-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-chart-pie me-2"></i>Bookmark Stats</h5>
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Total Bookmarks:</span>
+                            <strong>{{ bookmarks|length }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Completed Resources:</span>
+                            <strong>{{ get_completed_bookmark_count(current_user.id, bookmarks) }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mb-2">
+                            <span>Not Started:</span>
+                            <strong>{{ get_not_started_bookmark_count(current_user.id, bookmarks) }}</strong>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>With Notes:</span>
+                            <strong>{{ get_bookmarks_with_notes_count(bookmarks) }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-8 mb-4">
+            <div class="card bg-dark border-secondary h-100">
+                <div class="card-body">
+                    <h5 class="card-title"><i class="fas fa-bookmark me-2"></i>Bookmark Topics</h5>
+                    <div class="row mt-3">
+                        {% set topics = get_bookmark_topics(bookmarks) %}
+                        {% for topic, count in topics.items() %}
+                        <div class="col-md-6 mb-2">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <span>{{ topic }}</span>
+                                <div class="d-flex align-items-center">
+                                    <div class="progress me-2" style="width: 80px; height: 8px;">
+                                        <div class="progress-bar bg-info" role="progressbar" style="width: {{ (count / bookmarks|length) * 100 }}%;" aria-valuenow="{{ (count / bookmarks|length) * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                                    </div>
+                                    <strong>{{ count }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Empty State -->
+    <div class="row">
+        <div class="col-12 text-center py-5">
+            <div class="empty-state mb-4">
+                <i class="far fa-bookmark fa-5x text-muted mb-3"></i>
+                <h3>No bookmarks yet</h3>
+                <p class="text-muted">You haven't saved any learning resources. Browse our learning section and bookmark resources for later!</p>
+            </div>
+            <a href="{{ url_for('learning.home') }}" class="btn btn-primary">Browse Learning Resources</a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Notes Modal -->
+<div class="modal fade" id="notesModal" tabindex="-1" aria-labelledby="notesModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-light border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title" id="notesModalLabel">Notes</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <h6 id="notesResourceTitle" class="mb-3"></h6>
+                <div class="bg-dark border border-secondary rounded p-3">
+                    <p id="notesContent" class="mb-0"></p>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Search functionality
+    document.getElementById('bookmarkSearch')?.addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const table = document.getElementById('bookmarksTable');
+        const rows = table.querySelectorAll('tbody tr');
+        
+        rows.forEach(row => {
+            const resourceTitle = row.querySelector('td:first-child a').textContent.toLowerCase();
+            const resourceType = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
+            const topic = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
+            
+            if (resourceTitle.includes(searchTerm) || resourceType.includes(searchTerm) || topic.includes(searchTerm)) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+    
+    // View notes modal
+    document.querySelectorAll('.view-notes')?.forEach(button => {
+        button.addEventListener('click', function() {
+            const notes = this.getAttribute('data-notes');
+            const title = this.getAttribute('data-title');
+            
+            document.getElementById('notesResourceTitle').textContent = title;
+            document.getElementById('notesContent').textContent = notes;
+        });
+    });
+    
+    // Remove bookmark
+    document.querySelectorAll('.remove-bookmark')?.forEach(button => {
+        button.addEventListener('click', function() {
+            const bookmarkId = this.getAttribute('data-bookmark-id');
+            
+            if (confirm('Are you sure you want to remove this bookmark?')) {
+                fetch(`/learning/bookmarks/${bookmarkId}/remove`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the row from the table
+                        this.closest('tr').remove();
+                        
+                        // If no more rows, reload the page to show empty state
+                        const rows = document.querySelectorAll('#bookmarksTable tbody tr');
+                        if (rows.length === 0) {
+                            window.location.reload();
+                        }
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

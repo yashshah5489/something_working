@@ -1,0 +1,418 @@
+{% extends 'layout.html' %}
+
+{% block title %}{{ resource.title }} - Learning Resources{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{{ url_for('learning.home') }}">Learning</a></li>
+                    <li class="breadcrumb-item"><a href="{{ url_for('learning.topic', topic=resource.topic|lower|replace(' ', '-')) }}">{{ resource.topic }}</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">{{ resource.title }}</li>
+                </ol>
+            </nav>
+        </div>
+    </div>
+    
+    <div class="row">
+        <!-- Main content column -->
+        <div class="col-lg-8">
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-dark d-flex justify-content-between align-items-center">
+                    <div>
+                        <span class="badge {% if resource.resource_type == 'article' %}bg-info{% elif resource.resource_type == 'video' %}bg-danger{% elif resource.resource_type == 'quiz' %}bg-warning{% else %}bg-success{% endif %} me-2">
+                            {% if resource.resource_type == 'article' %}
+                            <i class="fas fa-file-alt me-1"></i>Article
+                            {% elif resource.resource_type == 'video' %}
+                            <i class="fas fa-video me-1"></i>Video
+                            {% elif resource.resource_type == 'quiz' %}
+                            <i class="fas fa-question-circle me-1"></i>Quiz
+                            {% elif resource.resource_type == 'infographic' %}
+                            <i class="fas fa-chart-bar me-1"></i>Infographic
+                            {% endif %}
+                        </span>
+                        <span class="badge {% if resource.difficulty_level == 'Beginner' %}bg-success{% elif resource.difficulty_level == 'Intermediate' %}bg-info{% else %}bg-warning{% endif %}">
+                            {{ resource.difficulty_level }}
+                        </span>
+                    </div>
+                    <div>
+                        <button id="bookmarkButton" class="btn btn-sm {% if is_bookmarked %}btn-warning{% else %}btn-outline-warning{% endif %}" data-resource-id="{{ resource.id }}" {% if is_bookmarked %}disabled{% endif %}>
+                            <i class="{% if is_bookmarked %}fas{% else %}far{% endif %} fa-bookmark me-1"></i>
+                            {% if is_bookmarked %}Bookmarked{% else %}Bookmark{% endif %}
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h1 class="card-title mb-3">{{ resource.title }}</h1>
+                    
+                    <div class="d-flex justify-content-between text-muted small mb-4">
+                        <div><i class="far fa-clock me-1"></i>{{ resource.duration_minutes }} min read</div>
+                        <div><i class="far fa-calendar-alt me-1"></i>Last updated: {{ resource.updated_at.strftime('%d %b, %Y') }}</div>
+                    </div>
+                    
+                    {% if resource.thumbnail_url %}
+                    <div class="text-center mb-4">
+                        <img src="{{ resource.thumbnail_url }}" class="img-fluid rounded" alt="{{ resource.title }}" style="max-height: 300px;">
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Resource description -->
+                    <div class="card-text mb-4">
+                        <p class="lead">{{ resource.description }}</p>
+                    </div>
+                    
+                    <!-- Main content - handle different resource types -->
+                    <div class="resource-content">
+                        {% if resource.resource_type == 'video' and resource.external_url %}
+                        <div class="ratio ratio-16x9 mb-4">
+                            <iframe src="{{ resource.external_url }}" title="{{ resource.title }}" allowfullscreen></iframe>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Content as HTML or markdown -->
+                        <div class="content-container">
+                            {{ resource.content|safe }}
+                        </div>
+                        
+                        {% if resource.resource_type == 'quiz' %}
+                        <div class="mt-4 p-4 bg-dark border border-info rounded quiz-container">
+                            <h4 class="text-center mb-4">Test Your Knowledge</h4>
+                            <form id="quizForm">
+                                <!-- Quiz questions would go here, using resource.content data -->
+                                <div class="text-center mt-4">
+                                    <button type="submit" class="btn btn-primary">Submit Answers</button>
+                                </div>
+                            </form>
+                            <div id="quizResults" class="mt-4 d-none">
+                                <div class="alert alert-success">
+                                    <h5 class="alert-heading">Your score: <span id="quizScore">0</span>%</h5>
+                                    <p id="quizFeedback">You've completed the quiz!</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="card-footer bg-dark border-secondary d-flex justify-content-between align-items-center">
+                    <!-- Progress bar -->
+                    <div class="progress flex-grow-1 me-3" style="height: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ progress.completion_percentage }}%;" aria-valuenow="{{ progress.completion_percentage }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    
+                    <!-- Mark as complete button -->
+                    <button id="markCompleteButton" class="btn btn-success" {% if progress.is_completed %}disabled{% endif %}>
+                        {% if progress.is_completed %}
+                        <i class="fas fa-check-circle me-1"></i>Completed
+                        {% else %}
+                        <i class="far fa-check-circle me-1"></i>Mark as Complete
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Notes Section -->
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="fas fa-sticky-note me-2"></i>Your Notes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="form-floating mb-3">
+                        <textarea class="form-control bg-dark text-light" placeholder="Add your notes here" id="notesArea" style="height: 150px"></textarea>
+                        <label for="notesArea">Add your notes here</label>
+                    </div>
+                    <div class="text-end">
+                        <button id="saveNotesButton" class="btn btn-primary">Save Notes</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar column -->
+        <div class="col-lg-4">
+            <!-- Learning Path Progress -->
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="fas fa-map-signs me-2"></i>Your Learning Path</h5>
+                </div>
+                <div class="card-body">
+                    {% if progress.path_id %}
+                    {% set path = get_learning_path(progress.path_id) %}
+                    <h6>{{ path.name }}</h6>
+                    <div class="progress mb-2" style="height: 10px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ get_path_progress(current_user.id, path.id) }}%;" aria-valuenow="{{ get_path_progress(current_user.id, path.id) }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                    <small class="text-muted">{{ get_completed_resources_count(current_user.id, path.id) }} of {{ path.resource_sequence|length }} resources completed</small>
+                    
+                    <hr class="border-secondary">
+                    
+                    <h6 class="mb-3">Path Resources:</h6>
+                    <div class="list-group list-group-flush bg-dark">
+                        {% for resource_id in path.resource_sequence %}
+                        {% set path_resource = get_resource(resource_id) %}
+                        {% set is_current = resource_id == resource.id %}
+                        {% set is_done = is_resource_completed(current_user.id, resource_id) %}
+                        
+                        <a href="{{ url_for('learning.resource', resource_id=resource_id) }}" 
+                           class="list-group-item list-group-item-action bg-dark text-light border-secondary 
+                                  {% if is_current %}active{% endif %} 
+                                  {% if is_done %}text-decoration-line-through{% endif %}">
+                            <div class="d-flex w-100 justify-content-between align-items-center">
+                                <div>
+                                    {% if is_done %}
+                                    <i class="fas fa-check-circle text-success me-2"></i>
+                                    {% elif is_current %}
+                                    <i class="fas fa-arrow-right text-warning me-2"></i>
+                                    {% else %}
+                                    <i class="far fa-circle text-muted me-2"></i>
+                                    {% endif %}
+                                    {{ path_resource.title }}
+                                </div>
+                                <small>{{ path_resource.duration_minutes }} min</small>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i>This resource is not part of any learning path.
+                    </div>
+                    <a href="{{ url_for('learning.home') }}" class="btn btn-outline-primary">Browse Learning Paths</a>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Related Resources -->
+            {% if related_resources %}
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="fas fa-link me-2"></i>Related Resources</h5>
+                </div>
+                <div class="card-body">
+                    <div class="list-group list-group-flush bg-dark">
+                        {% for related in related_resources %}
+                        <a href="{{ url_for('learning.resource', resource_id=related.id) }}" class="list-group-item list-group-item-action bg-dark text-light border-secondary">
+                            <div class="d-flex align-items-center">
+                                {% if related.resource_type == 'article' %}
+                                <i class="fas fa-file-alt fa-fw text-info me-2"></i>
+                                {% elif related.resource_type == 'video' %}
+                                <i class="fas fa-video fa-fw text-danger me-2"></i>
+                                {% elif related.resource_type == 'quiz' %}
+                                <i class="fas fa-question-circle fa-fw text-warning me-2"></i>
+                                {% elif related.resource_type == 'infographic' %}
+                                <i class="fas fa-chart-bar fa-fw text-success me-2"></i>
+                                {% endif %}
+                                <div>
+                                    <div>{{ related.title }}</div>
+                                    <small class="text-muted">{{ related.duration_minutes }} min · {{ related.difficulty_level }}</small>
+                                </div>
+                            </div>
+                        </a>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Prerequisites -->
+            {% if resource.prerequisites %}
+            <div class="card bg-dark border-secondary mb-4">
+                <div class="card-header bg-dark">
+                    <h5 class="mb-0"><i class="fas fa-list-ol me-2"></i>Prerequisites</h5>
+                </div>
+                <div class="card-body">
+                    <ul class="list-group list-group-flush bg-dark">
+                        {% for prereq_id in resource.prerequisites %}
+                        {% set prereq = get_resource(prereq_id) %}
+                        <li class="list-group-item bg-dark text-light border-secondary">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>{{ prereq.title }}</div>
+                                <a href="{{ url_for('learning.resource', resource_id=prereq_id) }}" class="btn btn-sm btn-outline-primary">View</a>
+                            </div>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize variables
+    let resourceId = {{ resource.id }};
+    let isCompleted = {{ 'true' if progress.is_completed else 'false' }};
+    let completionPercentage = {{ progress.completion_percentage }};
+    let quizScore = {{ progress.quiz_score or 0 }};
+    
+    // Bookmark functionality
+    document.getElementById('bookmarkButton')?.addEventListener('click', function() {
+        if (this.disabled) return;
+        
+        fetch(`/learning/bookmark/${resourceId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                notes: document.getElementById('notesArea').value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.classList.remove('btn-outline-warning');
+                this.classList.add('btn-warning');
+                this.innerHTML = '<i class="fas fa-bookmark me-1"></i>Bookmarked';
+                this.disabled = true;
+            }
+        });
+    });
+    
+    // Mark as complete functionality
+    document.getElementById('markCompleteButton')?.addEventListener('click', function() {
+        if (this.disabled) return;
+        
+        fetch(`/learning/complete/${resourceId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                quiz_score: quizScore,
+                time_spent: {{ resource.duration_minutes }}
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                this.innerHTML = '<i class="fas fa-check-circle me-1"></i>Completed';
+                this.disabled = true;
+                
+                // Update the progress bar to 100%
+                document.querySelector('.progress-bar').style.width = '100%';
+                document.querySelector('.progress-bar').setAttribute('aria-valuenow', 100);
+                
+                // If there's a path display, update that resource to show as completed
+                const pathItem = document.querySelector(`.list-group-item[href="/learning/resource/${resourceId}"]`);
+                if (pathItem) {
+                    pathItem.classList.add('text-decoration-line-through');
+                    const icon = pathItem.querySelector('i');
+                    if (icon) {
+                        icon.className = 'fas fa-check-circle text-success me-2';
+                    }
+                }
+            }
+        });
+    });
+    
+    // Save notes functionality
+    document.getElementById('saveNotesButton')?.addEventListener('click', function() {
+        const notes = document.getElementById('notesArea').value;
+        
+        // Update bookmark with notes
+        fetch(`/learning/bookmark/${resourceId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                notes: notes
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Show success message
+                alert('Notes saved successfully');
+            }
+        });
+    });
+    
+    // Update progress as the user scrolls through the content
+    document.addEventListener('DOMContentLoaded', function() {
+        if (isCompleted) return; // Don't track progress if already completed
+        
+        const contentContainer = document.querySelector('.content-container');
+        if (!contentContainer) return;
+        
+        window.addEventListener('scroll', function() {
+            const rect = contentContainer.getBoundingClientRect();
+            const contentTop = rect.top;
+            const contentBottom = rect.bottom;
+            const windowHeight = window.innerHeight;
+            
+            // Calculate what percentage of the content is visible
+            const visibleHeight = Math.min(contentBottom, windowHeight) - Math.max(contentTop, 0);
+            const totalHeight = rect.height;
+            
+            // Calculate content scroll percentage
+            let scrollPercentage = Math.round((1 - (visibleHeight / totalHeight)) * 100);
+            scrollPercentage = Math.min(Math.max(scrollPercentage, 0), 100);
+            
+            // Only update if the new percentage is higher than current
+            if (scrollPercentage > completionPercentage) {
+                completionPercentage = scrollPercentage;
+                
+                // Update the progress bar
+                document.querySelector('.progress-bar').style.width = `${completionPercentage}%`;
+                document.querySelector('.progress-bar').setAttribute('aria-valuenow', completionPercentage);
+                
+                // Send progress update to server
+                fetch(`/learning/update-progress/${resourceId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        percentage: completionPercentage
+                    })
+                });
+                
+                // Enable the mark as complete button when near the end
+                if (completionPercentage >= 90 && !isCompleted) {
+                    document.getElementById('markCompleteButton').disabled = false;
+                }
+            }
+        });
+    });
+    
+    // Quiz handling if applicable
+    const quizForm = document.getElementById('quizForm');
+    if (quizForm) {
+        quizForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // In a real implementation, you would validate quiz answers here
+            // For this example, we'll just simulate a score calculation
+            
+            // Show quiz results
+            quizScore = Math.floor(Math.random() * 30) + 70; // Random score between 70-100 for example
+            document.getElementById('quizScore').textContent = quizScore;
+            
+            let feedback = '';
+            if (quizScore >= 90) {
+                feedback = 'Excellent! You've mastered this topic.';
+            } else if (quizScore >= 70) {
+                feedback = 'Good job! You have a solid understanding of the material.';
+            } else {
+                feedback = 'You've completed the quiz. Consider reviewing the material again.';
+            }
+            
+            document.getElementById('quizFeedback').textContent = feedback;
+            document.getElementById('quizResults').classList.remove('d-none');
+            
+            // Mark quiz as completed
+            document.getElementById('markCompleteButton').disabled = false;
+            completionPercentage = 100;
+            document.querySelector('.progress-bar').style.width = '100%';
+            document.querySelector('.progress-bar').setAttribute('aria-valuenow', 100);
+        });
+    }
+</script>
+{% endblock %}

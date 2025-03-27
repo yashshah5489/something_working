@@ -40,90 +40,26 @@
                             <label class="form-check-label" for="dark_mode">Dark Mode</label>
                         </div>
                     </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="daily_tip" name="daily_tip" {% if current_user.preferences.get('daily_tip', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="daily_tip">Show Daily Tips</label>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check form-switch">
+                            <input class="form-check-input" type="checkbox" id="learning_notifications" name="learning_notifications" {% if current_user.preferences.get('learning_notifications', True) %}checked{% endif %}>
+                            <label class="form-check-label" for="learning_notifications">Learning Suggestions</label>
+                        </div>
+                    </div>
                     <div class="d-grid gap-2">
                         <button type="submit" class="btn btn-primary">Update Profile</button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
-    
-    <div class="col-md-8">
-        <div class="card bg-dark text-light border-secondary mb-4">
-            <div class="card-header bg-primary">
-                <h4 class="mb-0">Investment Preferences</h4>
-            </div>
-            <div class="card-body">
-                <form method="POST" action="{{ url_for('auth.update_preferences') }}">
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="risk_profile" class="form-label">Risk Profile</label>
-                            <select class="form-select" id="risk_profile" name="risk_profile">
-                                <option value="Conservative" {% if current_user.preferences.get('risk_profile') == 'Conservative' %}selected{% endif %}>Conservative</option>
-                                <option value="Moderate" {% if current_user.preferences.get('risk_profile') == 'Moderate' %}selected{% endif %}>Moderate</option>
-                                <option value="Aggressive" {% if current_user.preferences.get('risk_profile') == 'Aggressive' %}selected{% endif %}>Aggressive</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="investment_horizon" class="form-label">Investment Horizon</label>
-                            <select class="form-select" id="investment_horizon" name="investment_horizon">
-                                <option value="Short Term" {% if current_user.preferences.get('investment_horizon') == 'Short Term' %}selected{% endif %}>Short Term (&lt; 1 year)</option>
-                                <option value="Medium Term" {% if current_user.preferences.get('investment_horizon') == 'Medium Term' %}selected{% endif %}>Medium Term (1-5 years)</option>
-                                <option value="Long Term" {% if current_user.preferences.get('investment_horizon') == 'Long Term' %}selected{% endif %}>Long Term (&gt; 5 years)</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Favorite Sectors</label>
-                        <div class="row">
-                            {% for sector in ['IT', 'Banking', 'Pharma', 'FMCG', 'Auto', 'Energy', 'Infrastructure', 'Realty'] %}
-                            <div class="col-md-3 col-sm-6 mb-2">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" id="sector_{{ sector }}" name="favorite_sectors" value="{{ sector }}" 
-                                        {% if sector in current_user.preferences.get('favorite_sectors', []) %}checked{% endif %}>
-                                    <label class="form-check-label" for="sector_{{ sector }}">{{ sector }}</label>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        </div>
-                    </div>
-                    
-                    <div class="mb-3">
-                        <label class="form-label">Notification Settings</label>
-                        <div class="row">
-                            <div class="col-md-4 mb-2">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="email_alerts" name="email_alerts" 
-                                        {% if current_user.preferences.get('notification_settings', {}).get('email_alerts', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="email_alerts">Email Alerts</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="price_alerts" name="price_alerts"
-                                        {% if current_user.preferences.get('notification_settings', {}).get('price_alerts', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="price_alerts">Price Alerts</label>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-2">
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" id="news_alerts" name="news_alerts"
-                                        {% if current_user.preferences.get('notification_settings', {}).get('news_alerts', False) %}checked{% endif %}>
-                                    <label class="form-check-label" for="news_alerts">News Alerts</label>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="d-grid gap-2">
-                        <button type="submit" class="btn btn-primary">Save Preferences</button>
-                    </div>
-                </form>
-            </div>
-        </div>
         
-        <div class="card bg-dark text-light border-secondary">
+        <div class="card bg-dark text-light border-secondary mb-4">
             <div class="card-header bg-primary">
                 <h4 class="mb-0">Change Password</h4>
             </div>
@@ -147,6 +83,318 @@
                         <button type="submit" class="btn btn-primary">Change Password</button>
                     </div>
                 </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-8">
+        <ul class="nav nav-tabs nav-fill mb-3" id="profileTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="preferences-tab" data-bs-toggle="tab" data-bs-target="#preferences" type="button" role="tab" aria-controls="preferences" aria-selected="true">
+                    <i class="fas fa-sliders-h me-2"></i>Investment Preferences
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="personal-tab" data-bs-toggle="tab" data-bs-target="#personal" type="button" role="tab" aria-controls="personal" aria-selected="false">
+                    <i class="fas fa-user-tag me-2"></i>Personal Information
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="learning-tab" data-bs-toggle="tab" data-bs-target="#learning" type="button" role="tab" aria-controls="learning" aria-selected="false">
+                    <i class="fas fa-graduation-cap me-2"></i>Learning Preferences
+                </button>
+            </li>
+        </ul>
+        
+        <div class="tab-content" id="profileTabsContent">
+            <!-- Investment Preferences Tab -->
+            <div class="tab-pane fade show active" id="preferences" role="tabpanel" aria-labelledby="preferences-tab">
+                <div class="card bg-dark text-light border-secondary mb-4">
+                    <div class="card-header bg-primary">
+                        <h4 class="mb-0">Investment Preferences</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('auth.update_preferences') }}">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="risk_profile" class="form-label">Risk Profile</label>
+                                    <select class="form-select" id="risk_profile" name="risk_profile">
+                                        <option value="Conservative" {% if current_user.preferences.get('risk_profile') == 'Conservative' %}selected{% endif %}>Conservative</option>
+                                        <option value="Moderate" {% if current_user.preferences.get('risk_profile') == 'Moderate' %}selected{% endif %}>Moderate</option>
+                                        <option value="Aggressive" {% if current_user.preferences.get('risk_profile') == 'Aggressive' %}selected{% endif %}>Aggressive</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="investment_horizon" class="form-label">Investment Horizon</label>
+                                    <select class="form-select" id="investment_horizon" name="investment_horizon">
+                                        <option value="Short Term" {% if current_user.preferences.get('investment_horizon') == 'Short Term' %}selected{% endif %}>Short Term (&lt; 1 year)</option>
+                                        <option value="Medium Term" {% if current_user.preferences.get('investment_horizon') == 'Medium Term' %}selected{% endif %}>Medium Term (1-5 years)</option>
+                                        <option value="Long Term" {% if current_user.preferences.get('investment_horizon') == 'Long Term' %}selected{% endif %}>Long Term (&gt; 5 years)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Favorite Sectors</label>
+                                <div class="row">
+                                    {% for sector in ['IT', 'Banking', 'Pharma', 'FMCG', 'Auto', 'Energy', 'Infrastructure', 'Realty'] %}
+                                    <div class="col-md-3 col-sm-6 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="sector_{{ sector }}" name="favorite_sectors" value="{{ sector }}" 
+                                                {% if sector in current_user.preferences.get('favorite_sectors', []) %}checked{% endif %}>
+                                            <label class="form-check-label" for="sector_{{ sector }}">{{ sector }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Notification Settings</label>
+                                <div class="row">
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="email_alerts" name="email_alerts" 
+                                                {% if current_user.preferences.get('notification_settings', {}).get('email_alerts', False) %}checked{% endif %}>
+                                            <label class="form-check-label" for="email_alerts">Email Alerts</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="price_alerts" name="price_alerts"
+                                                {% if current_user.preferences.get('notification_settings', {}).get('price_alerts', False) %}checked{% endif %}>
+                                            <label class="form-check-label" for="price_alerts">Price Alerts</label>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4 mb-2">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" id="news_alerts" name="news_alerts"
+                                                {% if current_user.preferences.get('notification_settings', {}).get('news_alerts', False) %}checked{% endif %}>
+                                            <label class="form-check-label" for="news_alerts">News Alerts</label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Preferences</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Personal Information Tab (Optional) -->
+            <div class="tab-pane fade" id="personal" role="tabpanel" aria-labelledby="personal-tab">
+                <div class="card bg-dark text-light border-secondary mb-4">
+                    <div class="card-header bg-primary">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h4 class="mb-0">Personal Information</h4>
+                            <span class="badge bg-info">Optional</span>
+                        </div>
+                        <small class="text-light">This information helps us personalize your financial insights</small>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('auth.update_personal_profile') }}">
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="age_group" class="form-label">Age Group</label>
+                                    <select class="form-select" id="age_group" name="age_group">
+                                        <option value="" {% if not current_user.personal_profile.get('age_group') %}selected{% endif %}>Prefer not to say</option>
+                                        <option value="18-25" {% if current_user.personal_profile.get('age_group') == '18-25' %}selected{% endif %}>18-25</option>
+                                        <option value="26-35" {% if current_user.personal_profile.get('age_group') == '26-35' %}selected{% endif %}>26-35</option>
+                                        <option value="36-45" {% if current_user.personal_profile.get('age_group') == '36-45' %}selected{% endif %}>36-45</option>
+                                        <option value="46-55" {% if current_user.personal_profile.get('age_group') == '46-55' %}selected{% endif %}>46-55</option>
+                                        <option value="56+" {% if current_user.personal_profile.get('age_group') == '56+' %}selected{% endif %}>56+</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="income_bracket" class="form-label">Income Bracket (Annual)</label>
+                                    <select class="form-select" id="income_bracket" name="income_bracket">
+                                        <option value="" {% if not current_user.personal_profile.get('income_bracket') %}selected{% endif %}>Prefer not to say</option>
+                                        <option value="0-5L" {% if current_user.personal_profile.get('income_bracket') == '0-5L' %}selected{% endif %}>₹0 - ₹5 Lakhs</option>
+                                        <option value="5L-10L" {% if current_user.personal_profile.get('income_bracket') == '5L-10L' %}selected{% endif %}>₹5 Lakhs - ₹10 Lakhs</option>
+                                        <option value="10L-15L" {% if current_user.personal_profile.get('income_bracket') == '10L-15L' %}selected{% endif %}>₹10 Lakhs - ₹15 Lakhs</option>
+                                        <option value="15L-25L" {% if current_user.personal_profile.get('income_bracket') == '15L-25L' %}selected{% endif %}>₹15 Lakhs - ₹25 Lakhs</option>
+                                        <option value="25L+" {% if current_user.personal_profile.get('income_bracket') == '25L+' %}selected{% endif %}>₹25 Lakhs+</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="occupation" class="form-label">Occupation</label>
+                                    <input type="text" class="form-control" id="occupation" name="occupation" value="{{ current_user.personal_profile.get('occupation', '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="industry" class="form-label">Industry</label>
+                                    <input type="text" class="form-control" id="industry" name="industry" value="{{ current_user.personal_profile.get('industry', '') }}">
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="location" class="form-label">Location (City/State)</label>
+                                    <input type="text" class="form-control" id="location" name="location" value="{{ current_user.personal_profile.get('location', '') }}">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="tax_bracket" class="form-label">Tax Bracket</label>
+                                    <select class="form-select" id="tax_bracket" name="tax_bracket">
+                                        <option value="" {% if not current_user.personal_profile.get('tax_bracket') %}selected{% endif %}>Prefer not to say</option>
+                                        <option value="No Tax" {% if current_user.personal_profile.get('tax_bracket') == 'No Tax' %}selected{% endif %}>No Tax</option>
+                                        <option value="5%" {% if current_user.personal_profile.get('tax_bracket') == '5%' %}selected{% endif %}>5%</option>
+                                        <option value="10%" {% if current_user.personal_profile.get('tax_bracket') == '10%' %}selected{% endif %}>10%</option>
+                                        <option value="15%" {% if current_user.personal_profile.get('tax_bracket') == '15%' %}selected{% endif %}>15%</option>
+                                        <option value="20%" {% if current_user.personal_profile.get('tax_bracket') == '20%' %}selected{% endif %}>20%</option>
+                                        <option value="30%" {% if current_user.personal_profile.get('tax_bracket') == '30%' %}selected{% endif %}>30%</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="monthly_expenses" class="form-label">Monthly Expenses (Approx.)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" min="0" class="form-control" id="monthly_expenses" name="monthly_expenses" value="{{ current_user.personal_profile.get('monthly_expenses', '') }}">
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="loan_emi" class="form-label">Loan EMIs (Approx.)</label>
+                                    <div class="input-group">
+                                        <span class="input-group-text">₹</span>
+                                        <input type="number" min="0" class="form-control" id="loan_emi" name="loan_emi" value="{{ current_user.personal_profile.get('loan_emi', '') }}">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Financial Goals</label>
+                                <div class="row">
+                                    {% for goal in ['Retirement', 'House', 'Education', 'Children', 'Travel', 'Wealth Growth', 'Debt Free', 'Emergency Fund'] %}
+                                    <div class="col-md-3 col-sm-6 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="goal_{{ goal | lower }}" name="financial_goals" value="{{ goal }}" 
+                                                {% if goal in current_user.personal_profile.get('financial_goals', []) %}checked{% endif %}>
+                                            <label class="form-check-label" for="goal_{{ goal | lower }}">{{ goal }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Existing Investments</label>
+                                <div class="row">
+                                    {% for investment in ['Stocks', 'Mutual Funds', 'Fixed Deposits', 'PPF', 'NPS', 'Real Estate', 'Gold', 'Bonds'] %}
+                                    <div class="col-md-3 col-sm-6 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="inv_{{ investment | lower | replace(' ', '_') }}" name="existing_investments" value="{{ investment }}" 
+                                                {% if investment in current_user.personal_profile.get('existing_investments', []) %}checked{% endif %}>
+                                            <label class="form-check-label" for="inv_{{ investment | lower | replace(' ', '_') }}">{{ investment }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="risk_tolerance_score" class="form-label">Risk Tolerance (1-10)</label>
+                                    <div class="range">
+                                        <input type="range" class="form-range" min="1" max="10" id="risk_tolerance_score" name="risk_tolerance_score" value="{{ current_user.personal_profile.get('risk_tolerance_score', 5) }}">
+                                        <div class="d-flex justify-content-between small">
+                                            <span>Very Low</span>
+                                            <span>Medium</span>
+                                            <span>Very High</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="investment_timeline" class="form-label">Investment Timeline (Years)</label>
+                                    <input type="number" min="1" max="40" class="form-control" id="investment_timeline" name="investment_timeline" value="{{ current_user.personal_profile.get('investment_timeline', '') }}">
+                                </div>
+                            </div>
+                            
+                            <div class="alert alert-info">
+                                <i class="fas fa-shield-alt me-2"></i>Your personal information is used only to personalize your financial insights and recommendations. We never share this data with third parties.
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Personal Information</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Learning Preferences Tab -->
+            <div class="tab-pane fade" id="learning" role="tabpanel" aria-labelledby="learning-tab">
+                <div class="card bg-dark text-light border-secondary mb-4">
+                    <div class="card-header bg-primary">
+                        <h4 class="mb-0">Learning Preferences</h4>
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="{{ url_for('auth.update_learning_preferences') }}">
+                            <div class="row mb-3">
+                                <div class="col-md-6 mb-3 mb-md-0">
+                                    <label for="experience_level" class="form-label">Experience Level</label>
+                                    <select class="form-select" id="experience_level" name="experience_level">
+                                        <option value="Beginner" {% if current_user.personal_profile.get('experience_level') == 'Beginner' %}selected{% endif %}>Beginner</option>
+                                        <option value="Intermediate" {% if current_user.personal_profile.get('experience_level') == 'Intermediate' %}selected{% endif %}>Intermediate</option>
+                                        <option value="Advanced" {% if current_user.personal_profile.get('experience_level') == 'Advanced' %}selected{% endif %}>Advanced</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="preferred_learning_style" class="form-label">Preferred Learning Style</label>
+                                    <select class="form-select" id="preferred_learning_style" name="preferred_learning_style">
+                                        <option value="Text" {% if current_user.personal_profile.get('preferred_learning_style') == 'Text' %}selected{% endif %}>Text-based</option>
+                                        <option value="Video" {% if current_user.personal_profile.get('preferred_learning_style') == 'Video' %}selected{% endif %}>Video</option>
+                                        <option value="Interactive" {% if current_user.personal_profile.get('preferred_learning_style') == 'Interactive' %}selected{% endif %}>Interactive</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label">Learning Topics of Interest</label>
+                                <div class="row">
+                                    {% for topic in ['Stocks', 'Mutual Funds', 'Taxation', 'Retirement', 'Fundamental Analysis', 'Technical Analysis', 'IPOs', 'Bonds', 'Asset Allocation', 'Risk Management', 'Economic Indicators', 'Global Markets'] %}
+                                    <div class="col-md-4 col-sm-6 mb-2">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="topic_{{ topic | lower | replace(' ', '_') }}" name="learning_topics" value="{{ topic }}" 
+                                                {% if topic in current_user.learning_progress.get('learning_topics', []) %}checked{% endif %}>
+                                            <label class="form-check-label" for="topic_{{ topic | lower | replace(' ', '_') }}">{{ topic }}</label>
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label for="current_learning_path" class="form-label">Current Learning Path</label>
+                                <select class="form-select" id="current_learning_path" name="current_learning_path">
+                                    <option value="Basics" {% if current_user.learning_progress.get('current_learning_path') == 'Basics' %}selected{% endif %}>Investment Basics</option>
+                                    <option value="StockAnalysis" {% if current_user.learning_progress.get('current_learning_path') == 'StockAnalysis' %}selected{% endif %}>Stock Analysis</option>
+                                    <option value="MutualFunds" {% if current_user.learning_progress.get('current_learning_path') == 'MutualFunds' %}selected{% endif %}>Mutual Funds</option>
+                                    <option value="TaxPlanning" {% if current_user.learning_progress.get('current_learning_path') == 'TaxPlanning' %}selected{% endif %}>Tax Planning</option>
+                                    <option value="Advanced" {% if current_user.learning_progress.get('current_learning_path') == 'Advanced' %}selected{% endif %}>Advanced Techniques</option>
+                                </select>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="daily_quiz" name="daily_quiz" 
+                                        {% if current_user.learning_progress.get('daily_quiz', False) %}checked{% endif %}>
+                                    <label class="form-check-label" for="daily_quiz">Daily Mini-Quiz</label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary">Save Learning Preferences</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
