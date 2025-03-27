@@ -2,10 +2,11 @@ import os
 import logging
 import json
 from datetime import datetime
-from langchain_community.vectorstores import FAISS
-from langchain_community.embeddings import HuggingFaceEmbeddings
-from langchain_text_splitters import RecursiveCharacterTextSplitter
-from langchain_core.documents import Document
+from langchain.vectorstores import FAISS
+# Commented out until sentence-transformers package is installed
+# from langchain.embeddings import HuggingFaceEmbeddings
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain.docstore.document import Document
 from config import FINANCIAL_BOOKS
 from services.db_service import db_service
 

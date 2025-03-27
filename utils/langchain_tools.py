@@ -1,12 +1,13 @@
 import os
 import logging
-from langchain.llms import Groq
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
 from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.docstore.document import Document
-from langchain.embeddings import HuggingFaceEmbeddings
+# Commented out until sentence-transformers package is installed
+# from langchain.embeddings import HuggingFaceEmbeddings
+from langchain_groq import ChatGroq
 from config import GROQ_API_KEY
 
 logger = logging.getLogger(__name__)
@@ -20,19 +21,14 @@ class LangChainManager:
             self.llm = None
         else:
             # Initialize Groq LLM
-            self.llm = Groq(
+            self.llm = ChatGroq(
                 api_key=self.api_key,
                 model_name="llama3-70b-8192"  # Default model
             )
         
-        # Initialize embeddings model for RAG
-        try:
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-mpnet-base-v2"
-            )
-        except Exception as e:
-            logger.error(f"Error initializing embeddings model: {e}")
-            self.embeddings = None
+        # Skip embeddings initialization for now
+        logger.warning("Using simple keyword matching instead of embeddings - sentence-transformers not installed")
+        self.embeddings = None
     
     def create_qa_chain(self, docs, prompt_template=None):
         """

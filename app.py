@@ -15,8 +15,8 @@ class Base(DeclarativeBase):
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")
 
-# Use SQLite for database (simpler configuration)
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///financial_analyzer.db")
+# Use PostgreSQL for database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -55,12 +55,15 @@ register_learning_helpers(app)
 # Register blueprints
 from routes.auth_routes import auth_bp
 from routes.learning_routes import learning_bp
-# Import main routes
-from routes import *
+from routes.main_routes import main_bp
+# Import API routes
+from routes.api_routes import api_bp
 
 # Register blueprints with the app
 app.register_blueprint(auth_bp)
 app.register_blueprint(learning_bp)
+app.register_blueprint(main_bp)
+app.register_blueprint(api_bp)
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

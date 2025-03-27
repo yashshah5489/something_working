@@ -61,8 +61,8 @@ def register():
             # Log in the user
             login_user(new_user)
             
-            flash('Registration successful! Welcome to Smart Financial Analyzer', 'success')
-            return redirect(url_for('main.dashboard'))
+            flash('Registration successful! Let\'s personalize your experience', 'success')
+            return redirect(url_for('auth.onboarding'))
             
         except Exception as e:
             db.session.rollback()
@@ -318,3 +318,131 @@ def update_learning_preferences():
     
     flash('Learning preferences updated successfully', 'success')
     return redirect(url_for('auth.profile'))
+
+@auth_bp.route('/onboarding')
+@login_required
+def onboarding():
+    """Show the onboarding process for new users"""
+    # Check if user has already completed personalization (to prevent going back to onboarding)
+    personal_profile = current_user.personal_profile or {}
+    if personal_profile.get('onboarding_completed'):
+        flash('You have already completed the personalization process', 'info')
+        return redirect(url_for('main.dashboard'))
+    
+    return render_template('onboarding.html')
+
+@auth_bp.route('/save_onboarding', methods=['POST'])
+@login_required
+def save_onboarding():
+    """Save the onboarding information"""
+    # Get basic information
+    age_group = request.form.get('age_group', '')
+    location = request.form.get('location', '')
+    occupation = request.form.get('occupation', '')
+    industry = request.form.get('industry', '')
+    
+    # Get financial information
+    income_bracket = request.form.get('income_bracket', '')
+    tax_bracket = request.form.get('tax_bracket', '')
+    
+    # Parse numeric values
+    monthly_expenses = request.form.get('monthly_expenses', '')
+    if monthly_expenses and monthly_expenses.strip():
+        try:
+            monthly_expenses = float(monthly_expenses)
+        except ValueError:
+            monthly_expenses = None
+    else:
+        monthly_expenses = None
+    
+    loan_emi = request.form.get('loan_emi', '')
+    if loan_emi and loan_emi.strip():
+        try:
+            loan_emi = float(loan_emi)
+        except ValueError:
+            loan_emi = None
+    else:
+        loan_emi = None
+    
+    # Get investment profile
+    existing_investments = request.form.get('existing_investments', '')
+    existing_investments = existing_investments.split(',') if existing_investments else []
+    
+    financial_goals = request.form.get('financial_goals', '')
+    financial_goals = financial_goals.split(',') if financial_goals else []
+    
+    investment_timeline = request.form.get('investment_timeline', '')
+    if investment_timeline and investment_timeline.strip():
+        try:
+            investment_timeline = int(investment_timeline)
+        except ValueError:
+            investment_timeline = None
+    else:
+        investment_timeline = None
+    
+    risk_tolerance_score = request.form.get('risk_tolerance_score', '5')
+    try:
+        risk_tolerance_score = int(risk_tolerance_score)
+    except ValueError:
+        risk_tolerance_score = 5
+    
+    # Get learning preferences
+    experience_level = request.form.get('experience_level', 'Beginner')
+    preferred_learning_style = request.form.get('preferred_learning_style', 'Text')
+    
+    # Get UI preferences
+    daily_tip = 'daily_tip' in request.form
+    learning_notifications = 'learning_notifications' in request.form
+    dark_mode = 'dark_mode' in request.form
+    
+    # Update personal profile
+    personal_profile = current_user.personal_profile or {}
+    personal_profile.update({
+        'age_group': age_group,
+        'income_bracket': income_bracket,
+        'occupation': occupation,
+        'industry': industry,
+        'location': location,
+        'tax_bracket': tax_bracket,
+        'monthly_expenses': monthly_expenses,
+        'loan_emi': loan_emi,
+        'risk_tolerance_score': risk_tolerance_score,
+        'investment_timeline': investment_timeline,
+        'financial_goals': financial_goals,
+        'existing_investments': existing_investments,
+        'experience_level': experience_level,
+        'preferred_learning_style': preferred_learning_style,
+        'onboarding_completed': True
+    })
+    
+    # Update preferences
+    preferences = current_user.preferences or {}
+    preferences.update({
+        'risk_profile': 'Conservative' if risk_tolerance_score <= 3 else 'Moderate' if risk_tolerance_score <= 7 else 'Aggressive',
+        'investment_horizon': 'Short Term' if investment_timeline and investment_timeline <= 3 else 'Medium Term' if investment_timeline and investment_timeline <= 10 else 'Long Term',
+        'dark_mode': dark_mode,
+        'daily_tip': daily_tip,
+        'learning_notifications': learning_notifications
+    })
+    
+    # Update learning progress
+    learning_progress = current_user.learning_progress or {}
+    learning_progress.update({
+        'difficulty_level': experience_level,
+        'current_learning_path': 'Basics' if experience_level == 'Beginner' else 'Intermediate' if experience_level == 'Intermediate' else 'Advanced'
+    })
+    
+    # Save all updates
+    current_user.personal_profile = personal_profile
+    current_user.preferences = preferences
+    current_user.learning_progress = learning_progress
+    
+    try:
+        db.session.commit()
+        flash('Your profile has been personalized! Welcome to Smart Financial Analyzer', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error saving onboarding data: {e}")
+        flash('An error occurred while saving your preferences', 'danger')
+    
+    return redirect(url_for('main.dashboard'))

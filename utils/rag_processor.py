@@ -1,13 +1,18 @@
 import os
 import logging
 import json
+# Import with comments for future use when sentence-transformers is installed
 from langchain.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.embeddings import HuggingFaceEmbeddings
+# Commented out until sentence-transformers package is installed
+# from langchain.embeddings import HuggingFaceEmbeddings
 from langchain.vectorstores import FAISS
 from langchain.chains import RetrievalQA
-from langchain.llms import Groq
-from config import GROQ_API_KEY, FINANCIAL_BOOKS, RAG_CHUNK_SIZE, RAG_CHUNK_OVERLAP
+from config import GROQ_API_KEY, FINANCIAL_BOOKS
+
+# Define RAG constants
+RAG_CHUNK_SIZE = 1000
+RAG_CHUNK_OVERLAP = 200
 
 logger = logging.getLogger(__name__)
 
@@ -17,18 +22,14 @@ class RAGProcessor:
         self.financial_books = FINANCIAL_BOOKS
         self.book_content = {}
         
-        # Initialize embeddings
-        try:
-            self.embeddings = HuggingFaceEmbeddings(
-                model_name="sentence-transformers/all-mpnet-base-v2"
-            )
-        except Exception as e:
-            logger.error(f"Error initializing embeddings model: {e}")
-            self.embeddings = None
+        # Skip embeddings initialization for now
+        logger.warning("Using simple keyword matching instead of embeddings")
+        self.embeddings = None
         
         # Initialize LLM if API key is available
         if self.api_key:
-            self.llm = Groq(
+            from langchain_groq import ChatGroq
+            self.llm = ChatGroq(
                 api_key=self.api_key,
                 model_name="llama3-70b-8192"
             )
@@ -45,7 +46,7 @@ class RAGProcessor:
         In a real application, this would load actual book content from files
         For this implementation, we'll use summaries and key insights
         """
-        # Let's Talk Money by Monika Halan
+        # Let's Talk Money
         self.book_content["Let's Talk Money"] = """
         Let's Talk Money by Monika Halan is a personal finance guide tailored for Indians.
         
@@ -240,44 +241,55 @@ class RAGProcessor:
     def query_books(self, query, vectorstore=None, num_results=3):
         """
         Query book content for relevant information
+        Using simple keyword matching as a fallback for embeddings
         
         Args:
             query (str): Query string
-            vectorstore: Vector store to query (if None, creates a new one)
+            vectorstore: Vector store to query (not used in fallback mode)
             num_results (int): Number of results to return
             
         Returns:
             dict: Relevant book excerpts and sources
         """
         try:
-            # Create vector store if not provided
-            if not vectorstore:
-                vectorstore = self.create_book_vectorstore()
+            # Simple keyword matching implementation
+            query_keywords = set(query.lower().split())
             
-            if not vectorstore:
-                return {
-                    "query": query,
-                    "results": [],
-                    "error": "Failed to create vector store"
-                }
+            # Process all books
+            results = []
+            for title, content in self.book_content.items():
+                # Split content into paragraphs
+                paragraphs = content.split('\n\n')
+                
+                for paragraph in paragraphs:
+                    if paragraph.strip():
+                        # Count keyword matches
+                        paragraph_lower = paragraph.lower()
+                        match_count = sum(1 for keyword in query_keywords if keyword in paragraph_lower)
+                        
+                        if match_count > 0:
+                            # Calculate a simple relevance score based on keyword density
+                            word_count = len(paragraph_lower.split())
+                            relevance_score = match_count / (word_count + 0.001)  # Avoid division by zero
+                            
+                            results.append({
+                                "content": paragraph.strip(),
+                                "book": title,
+                                "relevance_score": relevance_score,
+                                "source": "book",
+                                "match_count": match_count
+                            })
             
-            # Search for relevant content
-            results = vectorstore.similarity_search_with_score(query, k=num_results)
+            # Sort by match count and relevance score
+            results.sort(key=lambda x: (x["match_count"], x["relevance_score"]), reverse=True)
             
-            # Process results
-            processed_results = []
-            for doc, score in results:
-                processed_results.append({
-                    "content": doc.page_content,
-                    "book": doc.metadata.get("title", "Unknown"),
-                    "relevance_score": float(score),
-                    "source": "book"
-                })
+            # Take top results
+            top_results = results[:num_results]
             
             return {
                 "query": query,
-                "results": processed_results,
-                "count": len(processed_results)
+                "results": top_results,
+                "count": len(top_results)
             }
         
         except Exception as e:
@@ -291,6 +303,7 @@ class RAGProcessor:
     def get_financial_advice_from_books(self, question, context=None):
         """
         Get financial advice based on book knowledge and optional context
+        Using simple keyword matching as a fallback for embeddings
         
         Args:
             question (str): Financial question
@@ -307,9 +320,8 @@ class RAGProcessor:
             }
         
         try:
-            # Query books for relevant content
-            vectorstore = self.create_book_vectorstore()
-            book_results = self.query_books(question, vectorstore, num_results=3)
+            # Query books for relevant content using keyword matching
+            book_results = self.query_books(question, None, num_results=3)
             
             # Create context for the LLM
             references = book_results.get("results", [])
@@ -430,14 +442,14 @@ class RAGProcessor:
             # Get book details
             recommendations = []
             for book_title in recommended_books:
-                book_info = next((book for book in self.financial_books if book["title"] == book_title), None)
+                book_info = next((book for book in self.financial_books if book.get("title") == book_title), None)
                 if book_info:
                     recommendations.append(book_info)
             
             # Get personalized explanation if LLM is available
             explanation = ""
             if self.llm:
-                books_str = ", ".join([book["title"] for book in recommendations])
+                books_str = ", ".join([book.get("title", "") for book in recommendations])
                 prompt = f"""
                 Explain why these books ({books_str}) are recommended for someone interested in "{financial_goal}".
                 Focus on how these books specifically apply to Indian investors and the Indian financial context.
