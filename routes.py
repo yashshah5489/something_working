@@ -31,8 +31,8 @@ def dashboard():
         # Get sector performance
         sector_performance = stock_service.get_sector_performance()
         
-        # Get latest RBI/SEBI updates
-        regulatory_updates = news_service.get_rbi_sebi_updates(max_results=3)
+        # Get latest market news using Yahoo Finance
+        regulatory_updates = stock_service.get_stock_news(max_results=3)
         
         return render_template(
             'dashboard.html',
@@ -54,14 +54,25 @@ def news():
         # Get query parameter for news type
         news_type = request.args.get('type', 'all')
         
+        # Use Yahoo Finance for all news categories
         if news_type == 'regulatory':
-            news_items = news_service.get_rbi_sebi_updates(max_results=10)
+            # For regulatory news, we'll use general market news but filter by keywords
+            news_items = stock_service.get_stock_news(max_results=10)
+            # Filter for potential regulatory content using keywords
+            news_items = [item for item in news_items if any(
+                keyword in item.get('title', '').lower() + ' ' + item.get('summary', '').lower() 
+                for keyword in ['rbi', 'sebi', 'policy', 'regulation', 'regulator', 'guidelines'])]
             analysis_title = "Regulatory Update Analysis"
         elif news_type == 'budget':
-            news_items = news_service.get_budget_economic_news(max_results=10)
+            # For budget news, we'll use general market news but filter by keywords
+            news_items = stock_service.get_stock_news(max_results=10)
+            # Filter for potential budget-related content using keywords
+            news_items = [item for item in news_items if any(
+                keyword in item.get('title', '').lower() + ' ' + item.get('summary', '').lower() 
+                for keyword in ['budget', 'fiscal', 'tax', 'finance ministry', 'economic policy', 'government'])]
             analysis_title = "Budget & Economic Policy Analysis"
         else:  # 'all' or any other value
-            news_items = news_service.get_financial_news(max_results=15)
+            news_items = stock_service.get_stock_news(max_results=15)
             analysis_title = "Financial News Analysis"
         
         # Get news analysis
@@ -96,8 +107,8 @@ def stocks():
         # Get stock historical data (for chart)
         historical_data = stock_service.get_historical_data(symbol, exchange, period="1mo")
         
-        # Get stock-specific news
-        stock_news = news_service.get_stock_specific_news(symbol, exchange)
+        # Get stock-specific news using Yahoo Finance
+        stock_news = stock_service.get_stock_news(symbol, exchange, max_results=5)
         
         # Get stock analysis from LLM
         if stock_data:
@@ -254,16 +265,23 @@ def search_stocks_api():
 
 @app.route('/api/news/refresh', methods=['POST'])
 def refresh_news():
-    """API endpoint to refresh news data"""
+    """API endpoint to refresh news data using Yahoo Finance instead of Tavily"""
     try:
-        news_type = request.json.get('type', 'all')
+        data = request.get_json()
+        news_type = data.get('type', 'all') if data else 'all'
+        symbol = data.get('symbol') if data else None
+        exchange = data.get('exchange') if data else None
+        max_results = int(data.get('max_results', 10)) if data else 10
         
-        if news_type == 'regulatory':
-            news_items = news_service.get_rbi_sebi_updates(max_results=10)
-        elif news_type == 'budget':
-            news_items = news_service.get_budget_economic_news(max_results=10)
+        # Use Yahoo Finance through the stock service to get news
+        if news_type == 'stock' and symbol:
+            # Get news for specific stock
+            news_items = stock_service.get_stock_news(symbol, exchange, max_results)
+            message = f'Fetched news for {symbol} ({len(news_items)} items)'
         else:  # 'all' or any other value
-            news_items = news_service.get_financial_news(max_results=15)
+            # Get general market news
+            news_items = stock_service.get_stock_news(max_results=max_results)
+            message = f'Fetched general market news ({len(news_items)} items)'
         
         # Convert datetime objects to strings for JSON serialization
         for item in news_items:
@@ -272,6 +290,7 @@ def refresh_news():
         
         return jsonify({
             'success': True,
+            'message': message,
             'news_items': news_items
         })
     except Exception as e:
@@ -394,15 +413,15 @@ def market_summary_api():
             except Exception as e:
                 logger.warning(f"Could not fetch data for {index['symbol']}: {e}")
         
-        # Recent news headlines
-        recent_news = news_service.get_financial_news(max_results=3)
+        # Recent news headlines using Yahoo Finance instead of Tavily
+        recent_news = stock_service.get_stock_news(max_results=3)
         news_headlines = []
         for news in recent_news:
             if "title" in news and "url" in news:
                 news_headlines.append({
                     "title": news["title"],
                     "url": news["url"],
-                    "source": news.get("source", "Unknown")
+                    "source": news.get("source", "Yahoo Finance")
                 })
         
         return jsonify({
@@ -451,6 +470,8 @@ def recommend_books_api():
             'success': False,
             'error': str(e)
         }), 500
+
+# Route at line 455 is a duplicate and was removed
 
 @app.route('/api/user/preferences', methods=['GET', 'POST'])
 def user_preferences_api():

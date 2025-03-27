@@ -45,6 +45,14 @@ class PostgreSQLService:
         except SQLAlchemyError as e:
             logger.error(f"Error retrieving user by email: {e}")
             return None
+            
+    def get_user_by_id(self, user_id):
+        """Retrieve a user by ID"""
+        try:
+            return User.query.get(user_id)
+        except SQLAlchemyError as e:
+            logger.error(f"Error retrieving user by ID: {e}")
+            return None
 
     def update_user_preferences(self, user_id, preferences):
         """Update user preferences"""
