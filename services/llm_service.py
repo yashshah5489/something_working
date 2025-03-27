@@ -15,8 +15,20 @@ class LLMService:
     """
     def __init__(self):
         self.api_key = GROQ_API_KEY
-        self.client = Groq(api_key=self.api_key)
-        self.model = "llama3-70b-8192"  # Using LLaMa 3 70B model
+        self.simplified_mode = False
+        
+        try:
+            if not self.api_key:
+                logger.warning("No Groq API key provided - using simplified mode")
+                self.simplified_mode = True
+                self.client = None
+            else:
+                self.client = Groq(api_key=self.api_key)
+            self.model = "llama3-70b-8192"  # Using LLaMa 3 70B model
+        except Exception as e:
+            logger.error(f"Error initializing Groq client: {e}")
+            self.client = None
+            self.simplified_mode = True
         
         # Templates
         self.stock_analysis_template = STOCK_ANALYSIS_TEMPLATE
@@ -29,6 +41,19 @@ class LLMService:
         Analyze a stock using the LLM based on stock data and news
         """
         try:
+            # Check if in simplified mode or API key missing
+            if self.simplified_mode or not self.client:
+                # Provide simplified response
+                symbol = stock_data.get("symbol", "Unknown")
+                price = stock_data.get("current_price", "N/A")
+                change = stock_data.get("day_change", "N/A")
+                
+                # Build simplified analysis
+                return f"To analyze {symbol} stock properly, the application needs a Groq API key. " \
+                       f"Current price: {price}, Daily change: {change}%. " \
+                       f"For detailed analysis, please provide a valid Groq API key."
+                
+            # If we have API, continue with normal flow
             # Prepare news summary
             news_summary = "\n".join([
                 f"- {item.get('title', 'No title')}: {item.get('summary', 'No summary')}"
@@ -83,6 +108,16 @@ class LLMService:
         Analyze a collection of news items to provide financial insights
         """
         try:
+            # Check if in simplified mode or API key missing
+            if self.simplified_mode or not self.client:
+                # Provide simplified response
+                news_count = len(news_items) if news_items else 0
+                
+                # Build simplified analysis
+                return f"To analyze news properly, the application needs a Groq API key. " \
+                       f"There are {news_count} news items available. " \
+                       f"For detailed analysis, please provide a valid Groq API key."
+                       
             # Format news items for the prompt
             news_texts = "\n\n".join([
                 f"Title: {item.get('title', 'No title')}\n"

@@ -6,7 +6,7 @@ from app import app, db
 from services.news_service import news_service
 from services.stock_service import stock_service
 from services.llm_service import llm_service
-from services.rag_service import rag_service
+from services.rag_service import rag_service, init_rag_service
 from services.db_service import db_service
 from config import FINANCIAL_BOOKS, INDIAN_STOCK_EXCHANGES
 
@@ -144,6 +144,11 @@ def insights():
         # Get answer from LLM
         answer = llm_service.answer_financial_question(query)
         
+        # Ensure rag_service is initialized
+        if rag_service is None:
+            init_rag_service()
+            logger.info("RAG service initialized on demand")
+        
         # Get related book recommendations
         book_recommendations = rag_service.get_book_recommendations(query)
         
@@ -195,6 +200,58 @@ def books():
         return render_template('books.html', error=True)
 
 # API routes
+@app.route('/api/stocks/search', methods=['GET'])
+def search_stocks_api():
+    """API endpoint to search for stocks"""
+    try:
+        query = request.args.get('query', '').strip()
+        if not query or len(query) < 2:
+            return jsonify({
+                'success': False,
+                'error': 'Search query must be at least 2 characters'
+            }), 400
+            
+        # This is a simplified search - in production, this would be much more sophisticated
+        # and connect to a stock market API for real-time data
+        results = []
+        
+        # Common Indian stocks for demo purposes
+        common_stocks = [
+            {"symbol": "RELIANCE", "name": "Reliance Industries", "exchange": "NSE"},
+            {"symbol": "TCS", "name": "Tata Consultancy Services", "exchange": "NSE"},
+            {"symbol": "HDFCBANK", "name": "HDFC Bank", "exchange": "NSE"},
+            {"symbol": "INFY", "name": "Infosys", "exchange": "NSE"},
+            {"symbol": "BAJFINANCE", "name": "Bajaj Finance", "exchange": "NSE"},
+            {"symbol": "HINDUNILVR", "name": "Hindustan Unilever", "exchange": "NSE"},
+            {"symbol": "SBIN", "name": "State Bank of India", "exchange": "NSE"},
+            {"symbol": "BHARTIARTL", "name": "Bharti Airtel", "exchange": "NSE"},
+            {"symbol": "ICICIBANK", "name": "ICICI Bank", "exchange": "NSE"},
+            {"symbol": "KOTAKBANK", "name": "Kotak Mahindra Bank", "exchange": "NSE"},
+            {"symbol": "ADANIPORTS", "name": "Adani Ports", "exchange": "NSE"},
+            {"symbol": "WIPRO", "name": "Wipro", "exchange": "NSE"},
+            {"symbol": "ASIANPAINT", "name": "Asian Paints", "exchange": "NSE"},
+            {"symbol": "ITC", "name": "ITC", "exchange": "NSE"},
+            {"symbol": "AXISBANK", "name": "Axis Bank", "exchange": "NSE"}
+        ]
+        
+        # Filter stocks based on query
+        query_lower = query.lower()
+        for stock in common_stocks:
+            if (query_lower in stock["symbol"].lower() or 
+                query_lower in stock["name"].lower()):
+                results.append(stock)
+        
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+    except Exception as e:
+        logger.error(f"Error searching stocks: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/news/refresh', methods=['POST'])
 def refresh_news():
     """API endpoint to refresh news data"""
@@ -310,6 +367,61 @@ def answer_question_api():
             'error': str(e)
         }), 500
 
+@app.route('/api/market/summary', methods=['GET'])
+def market_summary_api():
+    """API endpoint to get market summary"""
+    try:
+        # Get sector performance data
+        sector_performance = stock_service.get_sector_performance()
+        
+        # Get trending stocks
+        trending_stocks = stock_service.get_trending_stocks(limit=5)
+        
+        # Get key market indices
+        indices = [
+            {"symbol": "NIFTY50", "exchange": "NSE"},
+            {"symbol": "BANKNIFTY", "exchange": "NSE"},
+            {"symbol": "NIFTYMIDCAP", "exchange": "NSE"},
+            {"symbol": "SENSEX", "exchange": "BSE"}
+        ]
+        
+        indices_data = []
+        for index in indices:
+            try:
+                data = stock_service.get_stock_data(index["symbol"], index["exchange"])
+                if data:
+                    indices_data.append(data)
+            except Exception as e:
+                logger.warning(f"Could not fetch data for {index['symbol']}: {e}")
+        
+        # Recent news headlines
+        recent_news = news_service.get_financial_news(max_results=3)
+        news_headlines = []
+        for news in recent_news:
+            if "title" in news and "url" in news:
+                news_headlines.append({
+                    "title": news["title"],
+                    "url": news["url"],
+                    "source": news.get("source", "Unknown")
+                })
+        
+        return jsonify({
+            'success': True,
+            'market_data': {
+                'sector_performance': sector_performance,
+                'trending_gainers': trending_stocks.get("gainers", []),
+                'trending_losers': trending_stocks.get("losers", []),
+                'indices': indices_data,
+                'news_headlines': news_headlines
+            }
+        })
+    except Exception as e:
+        logger.error(f"Error getting market summary: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
 @app.route('/api/books/recommend', methods=['POST'])
 def recommend_books_api():
     """API endpoint to recommend books"""
@@ -335,6 +447,69 @@ def recommend_books_api():
         })
     except Exception as e:
         logger.error(f"Error recommending books: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e)
+        }), 500
+
+@app.route('/api/user/preferences', methods=['GET', 'POST'])
+def user_preferences_api():
+    """API endpoint to get/update user preferences"""
+    try:
+        # This would normally use the current logged-in user's ID
+        # For simplicity, we'll use a default user ID
+        user_id = 1  
+        
+        # GET request - retrieve preferences
+        if request.method == 'GET':
+            user = db_service.get_user_by_id(user_id)
+            
+            if not user:
+                return jsonify({
+                    'success': False,
+                    'error': 'User not found'
+                }), 404
+                
+            # Convert preferences to JSON-safe format
+            preferences = {}
+            if hasattr(user, 'preferences') and user.preferences:
+                preferences = user.preferences
+            elif isinstance(user, dict) and 'preferences' in user:
+                preferences = user['preferences']
+            
+            return jsonify({
+                'success': True,
+                'preferences': preferences
+            })
+        
+        # POST request - update preferences
+        elif request.method == 'POST':
+            data = request.get_json()
+            preferences = data.get('preferences', {})
+            
+            if not preferences:
+                return jsonify({
+                    'success': False,
+                    'error': 'No preferences provided'
+                }), 400
+                
+            # Update user preferences
+            result = db_service.update_user_preferences(user_id, preferences)
+            
+            if not result:
+                return jsonify({
+                    'success': False,
+                    'error': 'Failed to update preferences'
+                }), 500
+                
+            return jsonify({
+                'success': True,
+                'message': 'Preferences updated successfully',
+                'preferences': preferences
+            })
+            
+    except Exception as e:
+        logger.error(f"Error managing user preferences: {e}")
         return jsonify({
             'success': False,
             'error': str(e)

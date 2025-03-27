@@ -15,8 +15,8 @@ class Base(DeclarativeBase):
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev_secret_key")
 
-# configure the database, using the DATABASE_URL from PostgreSQL
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+# Use SQLite for database (simpler configuration)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///financial_analyzer.db")
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,
@@ -32,6 +32,10 @@ with app.app_context():
 
     # Create all tables in the database
     db.create_all()
+    
+    # Initialize services that need application context
+    from services.rag_service import init_rag_service
+    init_rag_service()
 
 # Import routes after app is created to avoid circular imports
 from routes import *
