@@ -2,11 +2,11 @@ import os
 import logging
 import json
 # Import with comments for future use when sentence-transformers is installed
-from langchain.document_loaders import TextLoader
+from langchain_community.document_loaders import TextLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 # Commented out until sentence-transformers package is installed
-# from langchain.embeddings import HuggingFaceEmbeddings
-from langchain.vectorstores import FAISS
+# from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_community.vectorstores import FAISS
 from langchain.chains import RetrievalQA
 from config import GROQ_API_KEY, FINANCIAL_BOOKS
 
@@ -187,6 +187,16 @@ class RAGProcessor:
         Returns:
             FAISS: Vector store for book content
         """
+        # For future use when sentence-transformers is installed
+        # Initialize embeddings
+        # try:
+        #     self.embeddings = HuggingFaceEmbeddings(
+        #         model_name="sentence-transformers/all-mpnet-base-v2"
+        #     )
+        # except Exception as e:
+        #     logger.error(f"Error initializing embeddings model: {e}")
+        #     self.embeddings = None
+        
         if not self.embeddings:
             logger.error("Embeddings model not initialized")
             return None
@@ -252,7 +262,31 @@ class RAGProcessor:
             dict: Relevant book excerpts and sources
         """
         try:
-            # Simple keyword matching implementation
+            # For future use when embeddings are available:
+            # if vectorstore is None and self.embeddings is not None:
+            #     # Create a new vector store
+            #     vectorstore = self.create_book_vectorstore()
+            #
+            # if vectorstore and self.embeddings:
+            #     # Use vectorstore for similarity search
+            #     docs = vectorstore.similarity_search(query, k=num_results)
+            #     results = []
+            #     
+            #     for doc in docs:
+            #         results.append({
+            #             "content": doc.page_content,
+            #             "book": doc.metadata.get("title", "Unknown"),
+            #             "relevance_score": 0.9,  # Placeholder score
+            #             "source": doc.metadata.get("source", "book")
+            #         })
+            #     
+            #     return {
+            #         "query": query,
+            #         "results": results,
+            #         "count": len(results)
+            #     }
+            
+            # Simple keyword matching implementation as fallback
             query_keywords = set(query.lower().split())
             
             # Process all books
@@ -320,6 +354,10 @@ class RAGProcessor:
             }
         
         try:
+            # For future use with embeddings:
+            # vectorstore = self.create_book_vectorstore()
+            # book_results = self.query_books(question, vectorstore, num_results=3)
+            
             # Query books for relevant content using keyword matching
             book_results = self.query_books(question, None, num_results=3)
             

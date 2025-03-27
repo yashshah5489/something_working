@@ -2,11 +2,11 @@ import os
 import logging
 from langchain.chains import RetrievalQA
 from langchain.prompts import PromptTemplate
-from langchain.vectorstores import FAISS
+from langchain_community.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
-from langchain.docstore.document import Document
+from langchain.schema import Document
 # Commented out until sentence-transformers package is installed
-# from langchain.embeddings import HuggingFaceEmbeddings
+# from langchain_community.embeddings import HuggingFaceEmbeddings
 from langchain_groq import ChatGroq
 from config import GROQ_API_KEY
 
