@@ -313,27 +313,48 @@ class RAGService:
     def enhance_llm_response(self, query, llm_response):
         """
         Enhance LLM response with relevant book content
+        Returns both enhanced response and book references separately
         """
         try:
             relevant_content = self.retrieve_relevant_content(query, k=3)
             
             if not relevant_content:
-                return llm_response
+                return {
+                    "response": llm_response,
+                    "book_references": []
+                }
             
-            # Format relevant content as citations
-            citations = "\n\n**Supporting Information from Financial Books:**\n"
+            # Create a list of book references for separate display
+            book_references = []
+            for item in relevant_content:
+                book_references.append({
+                    "title": item['source'],
+                    "author": item['author'],
+                    "content": item['content'],
+                    "type": item.get('type', 'content')
+                })
+            
+            # Format content to be added to the LLM prompt for reprocessing
+            # This will allow the LLM to weave the book insights into its response
+            book_insights_for_prompt = "\n\nRelevant insights from financial books that may help with this question:\n"
             
             for i, item in enumerate(relevant_content, 1):
-                citations += f"{i}. \"{item['content']}\" - {item['source']} by {item['author']}\n\n"
+                book_insights_for_prompt += f"- {item['content']} (From: {item['source']})\n"
             
-            # Combine with original response
-            enhanced_response = f"{llm_response}\n{citations}"
-            
-            return enhanced_response
+            # The caller should use these book insights to enhance the prompt and get a new response
+            # Return both the original response and book references
+            return {
+                "response": llm_response,
+                "book_references": book_references,
+                "insights_for_prompt": book_insights_for_prompt
+            }
         
         except Exception as e:
             logger.error(f"Error enhancing LLM response: {e}")
-            return llm_response
+            return {
+                "response": llm_response,
+                "book_references": []
+            }
 
 # Create a placeholder for the service instance
 rag_service = None

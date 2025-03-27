@@ -109,10 +109,32 @@
         </div>
     </div>
     
-    <!-- Book Recommendations -->
+    <!-- Book References (insights used in the answer) -->
+    {% if book_references %}
+    <div class="book-recommendations">
+        <h3 class="mb-3">Insights From Financial Books</h3>
+        <p class="text-muted mb-3">These insights from financial books were used to enhance your answer.</p>
+        <div class="row">
+            {% for ref in book_references %}
+            <div class="col-md-6 mb-3">
+                <div class="book-card">
+                    <div class="book-title">{{ ref.title }}</div>
+                    <div class="book-author">by {{ ref.author }}</div>
+                    <div class="mt-2">
+                        <p class="insight-item"><i data-feather="book-open" class="feather-sm mr-1"></i> {{ ref.content }}</p>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Additional Book Recommendations -->
     {% if book_recommendations %}
     <div class="book-recommendations">
-        <h3 class="mb-3">Recommended Books</h3>
+        <h3 class="mb-3">Further Reading Recommendations</h3>
+        <p class="text-muted mb-3">Based on your question, we recommend these books for deeper learning.</p>
         <div class="row">
             {% for book in book_recommendations %}
             <div class="col-md-4">

@@ -364,20 +364,28 @@ def answer_question_api():
                 'error': 'No query provided'
             }), 400
         
-        # Get answer from LLM
-        answer = llm_service.answer_financial_question(query)
+        # Get answer from LLM with integrated book insights
+        # This now returns both the answer and book references
+        response = llm_service.answer_financial_question(query)
         
-        # Get related book recommendations
+        # The answer already has book insights woven into it
+        if isinstance(response, dict):
+            answer = response.get("answer", "I couldn't find an answer to your question.")
+            book_references = response.get("book_references", [])
+        else:
+            # Fallback for backward compatibility
+            answer = response
+            book_references = []
+        
+        # Get additional book recommendations (separate from the book references)
         book_recommendations = rag_service.get_book_recommendations(query)
-        
-        # Enhance the answer with book insights
-        enhanced_answer = rag_service.enhance_llm_response(query, answer)
         
         return jsonify({
             'success': True,
             'query': query,
-            'answer': enhanced_answer,
-            'book_recommendations': book_recommendations
+            'answer': answer,
+            'book_references': book_references,  # Used directly in the answer
+            'book_recommendations': book_recommendations  # Additional recommendations
         })
     except Exception as e:
         logger.error(f"Error answering question: {e}")
@@ -396,12 +404,16 @@ def market_summary_api():
         # Get trending stocks
         trending_stocks = stock_service.get_trending_stocks(limit=5)
         
-        # Get key market indices
+        # Get key Indian market indices
         indices = [
-            {"symbol": "NIFTY50", "exchange": "NSE"},
-            {"symbol": "BANKNIFTY", "exchange": "NSE"},
-            {"symbol": "NIFTYMIDCAP", "exchange": "NSE"},
-            {"symbol": "SENSEX", "exchange": "BSE"}
+            {"symbol": "^NSEI", "exchange": "NSE", "name": "NIFTY 50 - National Stock Exchange Benchmark"},
+            {"symbol": "^NSEBANK", "exchange": "NSE", "name": "NIFTY Bank - Banking Sector Index"},
+            {"symbol": "^CNXMIDCAP", "exchange": "NSE", "name": "NIFTY Midcap 100 - Mid-sized Companies"},
+            {"symbol": "^CNXIT", "exchange": "NSE", "name": "NIFTY IT - Information Technology Sector"},
+            {"symbol": "^CNXPHARMA", "exchange": "NSE", "name": "NIFTY Pharma - Pharmaceutical Sector"},
+            {"symbol": "^CNXAUTO", "exchange": "NSE", "name": "NIFTY Auto - Automobile Sector"},
+            {"symbol": "^CNXFMCG", "exchange": "NSE", "name": "NIFTY FMCG - Fast Moving Consumer Goods"},
+            {"symbol": "^BSESN", "exchange": "BSE", "name": "S&P BSE SENSEX - Bombay Stock Exchange Benchmark"}
         ]
         
         indices_data = []

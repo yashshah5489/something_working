@@ -40,26 +40,31 @@ class StockService:
             "NTPC": "Power"
         }
 
-    def get_stock_data(self, symbol, exchange=None):
+    def get_stock_data(self, symbol, exchange=None, display_name=None):
         """
         Retrieve current stock data for a given symbol
+        For indices, pass the display_name parameter for user-friendly description
         """
         try:
             exchange = exchange or self.default_exchange
             
-            # Format the symbol for Yahoo Finance
-            yf_symbol = self._format_symbol_for_yf(symbol, exchange)
-            
-            # Check if we have recent data in PostgreSQL
-            cached_data = db_service.get_stock_data(symbol, exchange)
-            if cached_data and hasattr(cached_data, 'last_updated'):
-                # If data is less than 15 minutes old, use it
-                last_updated = cached_data.last_updated
-                if isinstance(last_updated, str):
-                    last_updated = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
+            # For indices, use the symbol directly if it starts with ^
+            if symbol.startswith('^'):
+                yf_symbol = symbol
+            else:
+                # Format symbol for Yahoo Finance
+                yf_symbol = self._format_symbol_for_yf(symbol, exchange)
                 
-                if datetime.utcnow() - last_updated < timedelta(minutes=15):
-                    return cached_data
+                # Check if we have recent data in PostgreSQL for non-index stocks
+                cached_data = db_service.get_stock_data(symbol, exchange)
+                if cached_data and hasattr(cached_data, 'last_updated'):
+                    # If data is less than 15 minutes old, use it
+                    last_updated = cached_data.last_updated
+                    if isinstance(last_updated, str):
+                        last_updated = datetime.fromisoformat(last_updated.replace('Z', '+00:00'))
+                    
+                    if datetime.utcnow() - last_updated < timedelta(minutes=15):
+                        return cached_data
             
             # Get fresh data from Yahoo Finance
             stock = yf.Ticker(yf_symbol)
@@ -69,28 +74,40 @@ class StockService:
                 logger.warning(f"No data found for {symbol} on {exchange}")
                 return None
             
-            # Get sector or use default if not found
-            sector = self.stock_sectors.get(symbol, "Miscellaneous")
+            # Check if this is an index
+            is_index = symbol.startswith('^')
+            
+            # Get sector or use default if not found (for non-indices)
+            sector = "Market Index" if is_index else self.stock_sectors.get(symbol, "Miscellaneous")
+            
+            # Get the proper name, using display_name parameter for indices if provided
+            name = display_name or info.get("shortName", symbol)
+            
+            # Handle special case for indices which have different data structure
+            current_price = info.get("regularMarketPrice", info.get("currentPrice"))
+            day_change = info.get("regularMarketChangePercent")
             
             # Extract the relevant data
             stock_data = {
                 "symbol": symbol,
                 "exchange": exchange,
-                "name": info.get("shortName", symbol),
+                "name": name,
                 "sector": sector,
-                "current_price": info.get("currentPrice", info.get("regularMarketPrice")),
-                "day_change": info.get("regularMarketChangePercent"),
+                "current_price": current_price,
+                "day_change": day_change,
                 "volume": info.get("regularMarketVolume"),
                 "high_52week": info.get("fiftyTwoWeekHigh"),
                 "low_52week": info.get("fiftyTwoWeekLow"),
-                "market_cap": info.get("marketCap"),
-                "pe_ratio": info.get("trailingPE"),
-                "dividend_yield": info.get("dividendYield"),
+                "market_cap": info.get("marketCap") if not is_index else None,
+                "pe_ratio": info.get("trailingPE") if not is_index else None,
+                "dividend_yield": info.get("dividendYield") if not is_index else None,
+                "is_index": is_index,
                 "last_updated": datetime.utcnow()
             }
             
-            # Save to PostgreSQL
-            db_service.save_stock_data(stock_data)
+            # Only save to PostgreSQL if it's not an index
+            if not is_index:
+                db_service.save_stock_data(stock_data)
             
             return stock_data
         
@@ -102,10 +119,16 @@ class StockService:
         """
         Get historical stock data
         period: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+        Works for both stocks and indices (^ prefix)
         """
         try:
             exchange = exchange or self.default_exchange
-            yf_symbol = self._format_symbol_for_yf(symbol, exchange)
+            
+            # Handle indices (that start with ^) differently
+            if symbol.startswith('^'):
+                yf_symbol = symbol  # Use as is for indices
+            else:
+                yf_symbol = self._format_symbol_for_yf(symbol, exchange)
             
             stock = yf.Ticker(yf_symbol)
             hist = stock.history(period=period)

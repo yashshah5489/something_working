@@ -211,40 +211,84 @@ class LLMService:
 
     def answer_financial_question(self, question, user_id="guest"):
         """
-        Answer a financial question using the LLM
+        Answer a financial question using the LLM, enhanced with book insights
         """
         try:
-            # Format the prompt
-            prompt = self.financial_qa_template.format(
+            # First, get an initial LLM response
+            from services.rag_service import rag_service
+
+            # Format the initial prompt
+            initial_prompt = self.financial_qa_template.format(
                 question=question
             )
             
-            # Make LLM API call
-            completion = self.client.chat.completions.create(
+            # Make initial LLM API call
+            initial_completion = self.client.chat.completions.create(
                 model=self.model,
                 messages=[
                     {"role": "system", "content": "You are a financial advisor specializing in Indian personal finance, taxation, and investment. Provide accurate, detailed answers with India-specific context."},
-                    {"role": "user", "content": prompt}
+                    {"role": "user", "content": initial_prompt}
                 ],
                 temperature=0.3,
                 max_tokens=1000
             )
             
-            # Extract response
-            answer = completion.choices[0].message.content
+            # Extract initial response
+            initial_answer = initial_completion.choices[0].message.content
+            
+            # Get book insights to enhance the response
+            enhanced_data = rag_service.enhance_llm_response(question, initial_answer)
+            book_references = enhanced_data.get("book_references", [])
+            insights_for_prompt = enhanced_data.get("insights_for_prompt", "")
+            
+            # If we have book insights, make a second call to weave them into the response
+            if insights_for_prompt:
+                # Create a new prompt with book insights included
+                enhanced_prompt = f"{initial_prompt}\n{insights_for_prompt}\n\nPlease incorporate these book insights into your answer, weaving them naturally and seamlessly into your explanation. Don't simply list them as quotes or references."
+                
+                # Make enhanced LLM API call
+                enhanced_completion = self.client.chat.completions.create(
+                    model=self.model,
+                    messages=[
+                        {"role": "system", "content": "You are a financial advisor specializing in Indian personal finance, taxation, and investment. Provide accurate, detailed answers with India-specific context. When insights from financial books are provided, weave them naturally into your response."},
+                        {"role": "user", "content": enhanced_prompt}
+                    ],
+                    temperature=0.3,
+                    max_tokens=1200
+                )
+                
+                # Extract enhanced response
+                enhanced_answer = enhanced_completion.choices[0].message.content
+                final_answer = enhanced_answer
+            else:
+                # No book insights available, use initial response
+                final_answer = initial_answer
+                
+            # Prepare sources list from book references for database storage
+            sources = []
+            for ref in book_references:
+                sources.append({
+                    "title": ref.get("title"),
+                    "author": ref.get("author"),
+                    "content_snippet": ref.get("content")[:100] + "..." if len(ref.get("content", "")) > 100 else ref.get("content", "")
+                })
             
             # Create a record of this query
             query_record = {
                 "user_id": user_id,
                 "query_type": "financial_qa",
                 "query_text": question,
-                "response": answer,
-                "sources": [],  # No specific sources for general Q&A
-                "confidence_score": 0.8
+                "response": final_answer,
+                "sources": sources,
+                "confidence_score": 0.85 if book_references else 0.8
             }
             db_service.save_user_query(query_record)
             
-            return answer
+            # Return both the answer and book references for frontend display
+            return {
+                "answer": final_answer,
+                "book_references": book_references
+            }
         
         except Exception as e:
             logger.error(f"Error answering financial question with LLM: {e}")
