@@ -40,9 +40,9 @@
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link {% if '/stock/' in request.path %}active{% endif %}" href="{{ url_for('main.stock_detail', symbol='NIFTY50') }}">
+                            <a class="nav-link {% if '/stock/' in request.path %}active{% endif %}" href="{{ url_for('main.stocks') }}">
                                 <i data-feather="trending-up"></i>
-                                NSE/BSE Stocks
+                                NSE/BSE Indices
                             </a>
                         </li>
                         <li class="nav-item">
@@ -64,33 +64,33 @@
                     </h6>
                     <ul class="nav flex-column">
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='NIFTY50') }}">
+                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='^NSEI') }}">
                                 <i data-feather="activity"></i>
                                 NIFTY 50
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='BANKNIFTY') }}">
+                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='^BSESN') }}">
+                                <i data-feather="activity"></i>
+                                BSE SENSEX
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='NIFTY BANK.NS') }}">
                                 <i data-feather="activity"></i>
                                 BANK NIFTY
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='RELIANCE') }}">
+                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='NIFTY IT.NS') }}">
                                 <i data-feather="activity"></i>
-                                Reliance Industries
+                                NIFTY IT
                             </a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='TCS') }}">
+                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='NIFTY PHARMA.NS') }}">
                                 <i data-feather="activity"></i>
-                                TCS
-                            </a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ url_for('main.stock_detail', symbol='HDFCBANK') }}">
-                                <i data-feather="activity"></i>
-                                HDFC Bank
+                                NIFTY PHARMA
                             </a>
                         </li>
                     </ul>

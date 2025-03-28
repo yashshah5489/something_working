@@ -51,20 +51,24 @@ class TavilyNewsExtractor:
         
         try:
             headers = {
-                "Content-Type": "application/json"
+                "Content-Type": "application/json",
+                "X-Api-Key": self.api_key
             }
             
-            params = {
-                "api_key": self.api_key,
+            data = {
                 "query": enhanced_query,
                 "search_depth": "advanced",
                 "max_results": max_results,
-                "include_domains": include_domains,
                 "include_answer": True,
                 "include_raw": False
             }
             
-            response = requests.get(self.base_url, headers=headers, params=params)
+            # Add domains as a list
+            if include_domains:
+                data["include_domains"] = include_domains
+            
+            # Use POST instead of GET as per Tavily API requirements
+            response = requests.post(self.base_url, headers=headers, json=data)
             response.raise_for_status()
             
             data = response.json()

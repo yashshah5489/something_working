@@ -1,0 +1,26 @@
+2025-03-28 07:50:03,840 - yfinance - DEBUG - params={'range': '5d', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-03-28 07:50:03,840 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-03-28 07:50:03,840 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-03-28 07:50:03,840 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-03-28 07:50:03,842 - yfinance - DEBUG - reusing cookie
+2025-03-28 07:50:03,842 - yfinance - DEBUG - reusing crumb
+2025-03-28 07:50:03,842 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-03-28 07:50:03,842 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-03-28 07:50:03,858 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/%5EBSESN?range=5d&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=rAUcAvsQKCE HTTP/1.1" 200 1479
+2025-03-28 07:50:03,858 - yfinance - DEBUG - response code=200
+2025-03-28 07:50:03,859 - yfinance - DEBUG -    Exiting _make_request()
+2025-03-28 07:50:03,859 - yfinance - DEBUG -   Exiting get()
+2025-03-28 07:50:03,860 - yfinance - DEBUG - ^BSESN: yfinance received OHLC data: 2025-03-24 03:45:00 -> 2025-03-28 07:34:57
+2025-03-28 07:50:03,861 - yfinance - DEBUG - ^BSESN: OHLC after cleaning: 2025-03-24 09:15:00+05:30 -> 2025-03-28 13:04:57+05:30
+2025-03-28 07:50:03,873 - yfinance - DEBUG - ^BSESN: OHLC after combining events: 2025-03-24 00:00:00+05:30 -> 2025-03-28 00:00:00+05:30
+2025-03-28 07:50:03,879 - yfinance - DEBUG - ^BSESN: yfinance returning OHLC: 2025-03-24 00:00:00+05:30 -> 2025-03-28 00:00:00+05:30
+2025-03-28 07:50:03,879 - yfinance - DEBUG -  Exiting history()
+2025-03-28 07:50:03,879 - yfinance - DEBUG - Exiting history()
+2025-03-28 07:50:03,881 - urllib3.connectionpool - DEBUG - Starting new HTTPS connection (1): api.tavily.com:443
+2025-03-28 07:50:03,974 - urllib3.connectionpool - DEBUG - https://api.tavily.com:443 "GET /search?api_key=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&query=latest+NSE+stock+market+news+India&search_depth=advanced&max_results=5&include_domains=economictimes.indiatimes.com&include_domains=moneycontrol.com&include_domains=business-standard.com&include_domains=financialexpress.com&include_domains=livemint.com&include_domains=businesstoday.in&include_domains=cnbctv18.com&include_domains=bloombergquint.com&include_domains=rbi.org.in&include_domains=sebi.gov.in&include_answer=True&include_raw=False HTTP/1.1" 405 31
+2025-03-28 07:50:03,975 - utils.tavily_api - ERROR - Error in Tavily API request: 405 Client Error: Method Not Allowed for url: https://api.tavily.com/search?api_key=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&query=latest+NSE+stock+market+news+India&search_depth=advanced&max_results=5&include_domains=economictimes.indiatimes.com&include_domains=moneycontrol.com&include_domains=business-standard.com&include_domains=financialexpress.com&include_domains=livemint.com&include_domains=businesstoday.in&include_domains=cnbctv18.com&include_domains=bloombergquint.com&include_domains=rbi.org.in&include_domains=sebi.gov.in&include_answer=True&include_raw=False
+2025-03-28 07:50:03,976 - routes.main_routes - ERROR - Error loading dashboard: unhashable type: 'slice'
+[2025-03-28 07:51:23 +0000] [3813] [INFO] Handling signal: winch
+[2025-03-28 07:51:55 +0000] [3813] [INFO] Handling signal: winch
+^C[2025-03-28 07:52:12 +0000] [3813] [INFO] Handling signal: int
+[2025-03-28 07:52:12 +0000] [3824] [INFO] Worker exiting (pid: 3824)

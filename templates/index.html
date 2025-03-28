@@ -40,7 +40,9 @@
         <h1>Smart Financial Analyzer</h1>
         <p class="lead">India-specific financial insights powered by AI</p>
         <div class="mt-4">
-            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg">Explore Dashboard</a>
+            <a href="{{ url_for('auth.login') }}" class="btn btn-success btn-lg">Login</a>
+            <a href="{{ url_for('auth.register') }}" class="btn btn-info btn-lg ms-2">Register</a>
+            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary btn-lg ms-2">Explore Dashboard</a>
             <a href="{{ url_for('main.financial_insights') }}" class="btn btn-outline-secondary btn-lg ms-2">Ask a Question</a>
         </div>
     </div>
@@ -65,9 +67,9 @@
                     <div class="feature-icon">
                         <i data-feather="trending-up"></i>
                     </div>
-                    <h3>NSE & BSE Stock Analysis</h3>
-                    <p>Track and analyze stocks from National Stock Exchange and Bombay Stock Exchange with real-time data and AI-powered insights.</p>
-                    <a href="{{ url_for('main.stock_detail', symbol='NIFTY') }}" class="btn btn-outline-primary">Analyze Stocks</a>
+                    <h3>NSE & BSE Market Indices</h3>
+                    <p>Track and analyze major Indian market indices from National Stock Exchange and Bombay Stock Exchange with real-time data and AI-powered insights.</p>
+                    <a href="{{ url_for('main.stocks') }}" class="btn btn-outline-primary">View Market Indices</a>
                 </div>
             </div>
             <div class="col-md-4">
