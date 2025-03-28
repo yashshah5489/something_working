@@ -37,11 +37,54 @@ def register():
         
         # Create new user
         try:
+            # Set default preferences
+            default_preferences = {
+                "stock_watchlist": [],
+                "favorite_sectors": [],
+                "risk_profile": "Moderate",
+                "investment_horizon": "Medium Term",
+                "dark_mode": True,
+                "daily_tip": True,
+                "learning_notifications": True,
+                "default_market": "NSE"
+            }
+            
+            # Set default personal profile
+            default_personal_profile = {
+                "age_group": None,
+                "income_bracket": None,
+                "occupation": None,
+                "industry": None,
+                "location": None,
+                "experience_level": "Beginner",
+                "financial_goals": [],
+                "existing_investments": [],
+                "monthly_expenses": None,
+                "loan_emi": None,
+                "risk_tolerance_score": 5,
+                "investment_timeline": None,
+                "tax_bracket": None,
+                "preferred_learning_style": "Text",
+                "onboarding_completed": False
+            }
+            
+            # Set default learning progress
+            default_learning_progress = {
+                "completed_topics": [],
+                "bookmarked_resources": [],
+                "quiz_scores": {},
+                "current_learning_path": "Basics",
+                "difficulty_level": "Beginner",
+                "daily_quiz": True
+            }
+            
             new_user = User(
                 username=username,
                 email=email,
-                password_hash=generate_password_hash(password)
-                # JSON default preferences and learning progress are set in the model
+                password_hash=generate_password_hash(password),
+                preferences=default_preferences,
+                personal_profile=default_personal_profile,
+                learning_progress=default_learning_progress
             )
             
             db.session.add(new_user)
