@@ -2,58 +2,58 @@
 
 {% block head %}
 <style>
-    .stock-card {
+    .card {
         padding: 20px;
         margin-bottom: 20px;
         border-radius: 8px;
     }
     
-    .stock-header {
+    .index-header {
         display: flex;
         align-items: center;
         justify-content: space-between;
         margin-bottom: 20px;
     }
     
-    .stock-price {
+    .index-price {
         font-size: 1.8rem;
         font-weight: bold;
     }
     
-    .stock-change {
+    .index-change {
         font-size: 1.2rem;
         padding: 4px 8px;
         border-radius: 4px;
     }
     
-    .stock-change-positive {
+    .change-positive {
         background-color: rgba(40, 167, 69, 0.2);
         color: #28a745;
     }
     
-    .stock-change-negative {
+    .change-negative {
         background-color: rgba(220, 53, 69, 0.2);
         color: #dc3545;
     }
     
-    .stock-details {
+    .details {
         display: flex;
         flex-wrap: wrap;
         margin-bottom: 20px;
     }
     
-    .stock-detail-item {
+    .detail-item {
         flex: 1 1 25%;
         min-width: 120px;
         margin-bottom: 15px;
     }
     
-    .stock-detail-label {
+    .detail-label {
         font-size: 0.9rem;
         color: #6c757d;
     }
     
-    .stock-detail-value {
+    .detail-value {
         font-size: 1.1rem;
         font-weight: 500;
     }
@@ -63,221 +63,269 @@
         margin-bottom: 20px;
     }
     
-    .stock-news-item {
+    .news-item {
         margin-bottom: 15px;
         padding-bottom: 15px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .stock-news-item:last-child {
+    .news-item:last-child {
         border-bottom: none;
     }
     
-    .analysis-card {
-        padding: 20px;
-        border-radius: 8px;
-        margin-bottom: 20px;
-    }
-    
-    .stock-list {
+    .index-list {
         margin: 0;
         padding: 0;
         list-style-type: none;
     }
     
-    .stock-item {
+    .index-item {
         display: flex;
         justify-content: space-between;
-        padding: 8px 0;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .index-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .index-item-description {
+        font-size: 0.85rem;
+        opacity: 0.7;
+        margin-top: 4px;
+    }
+    
+    .tab-content {
+        padding-top: 20px;
+    }
+    
+    .sector-performance {
+        height: 300px;
+    }
+    
+    .index-category {
+        font-size: 1.5rem;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
         border-bottom: 1px solid rgba(255, 255, 255, 0.1);
     }
     
-    .stock-item:last-child {
-        border-bottom: none;
+    .category-container {
+        margin-bottom: 30px;
+    }
+    
+    .tooltip-icon {
+        cursor: pointer;
+        margin-left: 5px;
     }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="container-fluid py-4">
-    <h1 class="h2 mb-4">Stock Analysis</h1>
+    <h1 class="h2 mb-4">Indian Market Indices</h1>
     
     {% if error %}
     <div class="alert alert-danger">
-        An error occurred while loading the stock information. Please try again later.
+        An error occurred while loading the market indices information. Please try again later.
     </div>
     {% else %}
     
-    <!-- Stock Search Form -->
+    <!-- Category Filter Tabs -->
     <div class="row mb-4">
-        <div class="col-md-8">
-            <form id="stockSearchForm" class="d-flex">
-                <input type="text" id="stockSymbol" name="symbol" class="form-control me-2" placeholder="Enter Stock Symbol (e.g., RELIANCE)" value="{{ selected_symbol or '' }}" required>
-                <select id="stockExchange" name="exchange" class="form-select me-2" style="width: 150px;">
-                    {% for exchange in exchanges %}
-                    <option value="{{ exchange }}" {% if selected_exchange == exchange %}selected{% endif %}>{{ exchange }}</option>
-                    {% endfor %}
-                </select>
-                <button type="submit" class="btn btn-primary">
-                    <i data-feather="search"></i> Search
-                </button>
-            </form>
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="marketCategories" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="all-tab" data-bs-toggle="tab" data-bs-target="#all" type="button" role="tab" aria-controls="all" aria-selected="true">All Indices</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="broad-market-tab" data-bs-toggle="tab" data-bs-target="#broad-market" type="button" role="tab" aria-controls="broad-market" aria-selected="false">Broad Market</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="sector-tab" data-bs-toggle="tab" data-bs-target="#sector" type="button" role="tab" aria-controls="sector" aria-selected="false">Sector Indices</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="market-cap-tab" data-bs-toggle="tab" data-bs-target="#market-cap" type="button" role="tab" aria-controls="market-cap" aria-selected="false">Market Cap</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="strategy-tab" data-bs-toggle="tab" data-bs-target="#strategy" type="button" role="tab" aria-controls="strategy" aria-selected="false">Strategy</button>
+                </li>
+            </ul>
         </div>
     </div>
     
-    <div class="row">
-        <!-- Stock Info Column -->
-        <div class="col-md-8">
-            {% if stock_data %}
-            <!-- Stock Overview Card -->
-            <div class="stock-card">
-                <div class="stock-header">
-                    <div>
-                        <h3>{{ stock_data.name }} ({{ stock_data.symbol }})</h3>
-                        <div>{{ stock_data.exchange }} • {{ stock_data.sector }}</div>
-                    </div>
-                    <div class="text-end">
-                        <div class="stock-price">₹{{ "%.2f"|format(stock_data.current_price|float) }}</div>
-                        <div class="stock-change {{ 'stock-change-positive' if stock_data.day_change|float > 0 else 'stock-change-negative' }}">
-                            {{ "+" if stock_data.day_change|float > 0 else "" }}{{ "%.2f"|format(stock_data.day_change|float) }}%
+    <div class="tab-content" id="marketCategoriesContent">
+        <!-- All Indices Tab -->
+        <div class="tab-pane fade show active" id="all" role="tabpanel" aria-labelledby="all-tab">
+            <div class="row">
+                <!-- Main Indices Overview -->
+                <div class="col-md-8">
+                    <div class="card">
+                        <h3>Market Overview</h3>
+                        <div class="row">
+                            {% if indices_by_category and indices_by_category.categories %}
+                                {% set broad_indices = indices_by_category.categories.get('Broad Market', []) %}
+                                {% for index in broad_indices[:2] %}
+                                    <div class="col-md-6">
+                                        <div class="index-header">
+                                            <div>
+                                                <h4>
+                                                    <a href="{{ url_for('main.stock_detail', symbol=index.symbol) }}">
+                                                        {{ index.name }}
+                                                    </a>
+                                                </h4>
+                                            </div>
+                                            <div class="text-end">
+                                                <div class="index-price">{{ "%.2f"|format(index.last|float) }}</div>
+                                                <div class="index-change {{ 'change-positive' if index.changePercent|float > 0 else 'change-negative' }}">
+                                                    {{ "+" if index.changePercent|float > 0 else "" }}{{ "%.2f"|format(index.changePercent|float) }}%
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="details">
+                                            <div class="detail-item">
+                                                <div class="detail-label">Previous Close</div>
+                                                <div class="detail-value">{{ "%.2f"|format(index.previousClose|float) }}</div>
+                                            </div>
+                                            <div class="detail-item">
+                                                <div class="detail-label">Change</div>
+                                                <div class="detail-value">{{ "%.2f"|format(index.change|float) }}</div>
+                                            </div>
+                                        </div>
+                                        <p class="index-item-description">{{ index.description }}</p>
+                                    </div>
+                                {% else %}
+                                    <div class="col-12">
+                                        <div class="alert alert-info">No broad market indices data available.</div>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Sector Performance Chart -->
+                        <h3 class="mt-4">Sector Performance</h3>
+                        <div class="sector-performance">
+                            <canvas id="sectorPerformanceChart"></canvas>
                         </div>
                     </div>
-                </div>
-                
-                <div class="stock-details">
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">Volume</div>
-                        <div class="stock-detail-value">{{ '{:,.0f}'.format(stock_data.volume|float) }}</div>
-                    </div>
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">52 Week High</div>
-                        <div class="stock-detail-value">₹{{ "%.2f"|format(stock_data.high_52week|float) }}</div>
-                    </div>
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">52 Week Low</div>
-                        <div class="stock-detail-value">₹{{ "%.2f"|format(stock_data.low_52week|float) }}</div>
-                    </div>
-                    {% if stock_data.market_cap %}
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">Market Cap</div>
-                        <div class="stock-detail-value">₹{{ '{:,.0f}'.format(stock_data.market_cap|float / 10000000) }} Cr</div>
-                    </div>
-                    {% endif %}
-                    {% if stock_data.pe_ratio %}
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">P/E Ratio</div>
-                        <div class="stock-detail-value">{{ "%.2f"|format(stock_data.pe_ratio|float) }}</div>
-                    </div>
-                    {% endif %}
-                    {% if stock_data.dividend_yield %}
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">Dividend Yield</div>
-                        <div class="stock-detail-value">{{ "%.2f"|format((stock_data.dividend_yield|float) * 100) }}%</div>
-                    </div>
-                    {% endif %}
-                    <div class="stock-detail-item">
-                        <div class="stock-detail-label">Last Updated</div>
-                        <div class="stock-detail-value">
-                            {% if stock_data.last_updated is string %}
-                                {{ stock_data.last_updated.split('T')[0] }} {{ stock_data.last_updated.split('T')[1].split('.')[0] }}
+                    
+                    <!-- Market News -->
+                    <div class="card">
+                        <h3>Latest Market News</h3>
+                        <div class="news-container">
+                            {% if market_news and market_news.articles %}
+                                {% for news in market_news.articles[:5] %}
+                                <div class="news-item">
+                                    <h5><a href="{{ news.url }}" target="_blank">{{ news.title }}</a></h5>
+                                    <p>{{ news.summary[:150] }}{% if news.summary|length > 150 %}...{% endif %}</p>
+                                    <small class="text-muted">
+                                        {{ news.source }} • 
+                                        {% if news.published_date is string %}
+                                            {{ news.published_date.split('T')[0] }}
+                                        {% else %}
+                                            {{ news.published_date.strftime('%Y-%m-%d') }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                {% else %}
+                                <p>No market news available.</p>
+                                {% endfor %}
                             {% else %}
-                                {{ stock_data.last_updated.strftime('%Y-%m-%d %H:%M:%S') }}
+                                <p>No market news available.</p>
                             {% endif %}
                         </div>
                     </div>
                 </div>
                 
-                <!-- Price Chart -->
-                <div class="chart-container">
-                    <canvas id="stockPriceChart"></canvas>
+                <!-- Sidebar - Categories Overview -->
+                <div class="col-md-4">
+                    <!-- Categories Summary -->
+                    {% if indices_by_category and indices_by_category.categories %}
+                        {% for category, indices in indices_by_category.categories.items() %}
+                            <div class="card">
+                                <h3>{{ category }}</h3>
+                                <ul class="index-list">
+                                    {% for index in indices %}
+                                    <li class="index-item">
+                                        <div>
+                                            <a href="{{ url_for('main.stock_detail', symbol=index.symbol) }}">
+                                                {{ index.name }}
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <span>{{ "%.2f"|format(index.last|float) }}</span>
+                                            <span class="{{ 'change-positive' if index.changePercent|float > 0 else 'change-negative' }}">
+                                                {{ "+" if index.changePercent|float > 0 else "" }}{{ "%.2f"|format(index.changePercent|float) }}%
+                                            </span>
+                                        </div>
+                                    </li>
+                                    {% else %}
+                                    <li>No data available</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
                 </div>
             </div>
-            
-            <!-- Stock Analysis Card -->
-            <div class="analysis-card">
-                <h3>AI Analysis</h3>
-                <div id="stockAnalysis">
-                    {{ stock_analysis|nl2br|safe }}
-                </div>
-            </div>
-            
-            <!-- Stock News Card -->
-            <div class="stock-card">
-                <h3>Related News</h3>
-                <div class="stock-news-container">
-                    {% for news in stock_news %}
-                    <div class="stock-news-item">
-                        <h5><a href="{{ news.url }}" target="_blank">{{ news.title }}</a></h5>
-                        <p>{{ news.summary[:150] }}{% if news.summary|length > 150 %}...{% endif %}</p>
-                        <small class="text-muted">
-                            {{ news.source }} • 
-                            {% if news.published_date is string %}
-                                {{ news.published_date.split('T')[0] }}
-                            {% else %}
-                                {{ news.published_date.strftime('%Y-%m-%d') }}
-                            {% endif %}
-                        </small>
-                    </div>
-                    {% else %}
-                    <p>No related news available for this stock.</p>
-                    {% endfor %}
-                </div>
-            </div>
-            {% else %}
-            <div class="alert alert-info">
-                Please enter a valid stock symbol to view its details.
-            </div>
-            {% endif %}
         </div>
         
-        <!-- Sidebar Column -->
-        <div class="col-md-4">
-            <!-- Top Gainers Card -->
-            <div class="stock-card">
-                <h3>Top Gainers</h3>
-                <ul class="stock-list">
-                    {% for stock in trending_gainers %}
-                    <li class="stock-item">
-                        <div>
-                            <a href="{{ url_for('main.stock_detail', symbol=stock.symbol) }}">
-                                {{ stock.symbol }}
-                            </a>
-                            <small class="text-muted">{{ stock.name }}</small>
+        <!-- Category Specific Tabs -->
+        {% for category_name in ['Broad Market', 'Sector', 'Market Cap', 'Strategy'] %}
+            {% set tab_id = category_name.lower().replace(' ', '-') %}
+            <div class="tab-pane fade" id="{{ tab_id }}" role="tabpanel" aria-labelledby="{{ tab_id }}-tab">
+                <div class="row">
+                    <div class="col-12">
+                        <div class="card">
+                            <h3>{{ category_name }} Indices</h3>
+                            
+                            {% if indices_by_category and indices_by_category.categories and indices_by_category.categories.get(category_name) %}
+                                <div class="row">
+                                    {% for index in indices_by_category.categories.get(category_name, []) %}
+                                        <div class="col-md-6 mb-4">
+                                            <div class="card h-100">
+                                                <div class="index-header">
+                                                    <div>
+                                                        <h4>
+                                                            <a href="{{ url_for('main.stock_detail', symbol=index.symbol) }}">
+                                                                {{ index.name }}
+                                                            </a>
+                                                        </h4>
+                                                    </div>
+                                                    <div class="text-end">
+                                                        <div class="index-price">{{ "%.2f"|format(index.last|float) }}</div>
+                                                        <div class="index-change {{ 'change-positive' if index.changePercent|float > 0 else 'change-negative' }}">
+                                                            {{ "+" if index.changePercent|float > 0 else "" }}{{ "%.2f"|format(index.changePercent|float) }}%
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                
+                                                <p class="index-item-description">{{ index.description or '' }}</p>
+                                                
+                                                <div class="mt-auto text-end">
+                                                    <a href="{{ url_for('main.stock_detail', symbol=index.symbol) }}" class="btn btn-sm btn-primary">
+                                                        View Details
+                                                    </a>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    {% else %}
+                                        <div class="col-12">
+                                            <div class="alert alert-info">No {{ category_name.lower() }} indices data available.</div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">No {{ category_name.lower() }} indices data available.</div>
+                            {% endif %}
                         </div>
-                        <div>
-                            <span>₹{{ "%.2f"|format(stock.current_price|float) }}</span>
-                            <span class="stock-change-positive">+{{ "%.2f"|format(stock.day_change|float) }}%</span>
-                        </div>
-                    </li>
-                    {% else %}
-                    <li>No data available</li>
-                    {% endfor %}
-                </ul>
+                    </div>
+                </div>
             </div>
-            
-            <!-- Top Losers Card -->
-            <div class="stock-card">
-                <h3>Top Losers</h3>
-                <ul class="stock-list">
-                    {% for stock in trending_losers %}
-                    <li class="stock-item">
-                        <div>
-                            <a href="{{ url_for('main.stock_detail', symbol=stock.symbol) }}">
-                                {{ stock.symbol }}
-                            </a>
-                            <small class="text-muted">{{ stock.name }}</small>
-                        </div>
-                        <div>
-                            <span>₹{{ "%.2f"|format(stock.current_price|float) }}</span>
-                            <span class="stock-change-negative">{{ "%.2f"|format(stock.day_change|float) }}%</span>
-                        </div>
-                    </li>
-                    {% else %}
-                    <li>No data available</li>
-                    {% endfor %}
-                </ul>
-            </div>
-        </div>
+        {% endfor %}
     </div>
     {% endif %}
 </div>
@@ -289,35 +337,45 @@
         // Initialize Feather icons
         feather.replace();
         
-        {% if stock_data and historical_data %}
-        // Stock Price Chart
-        const stockCtx = document.getElementById('stockPriceChart').getContext('2d');
+        // Show the category tab if one is selected
+        {% if selected_category %}
+        const categoryTab = document.getElementById('{{ selected_category.lower().replace(" ", "-") }}-tab');
+        if (categoryTab) {
+            const tabTrigger = new bootstrap.Tab(categoryTab);
+            tabTrigger.show();
+        }
+        {% endif %}
+        
+        {% if sector_performance and sector_performance.sectors %}
+        // Sector Performance Chart
+        const sectorCtx = document.getElementById('sectorPerformanceChart').getContext('2d');
         
         // Prepare data for chart
-        const dates = [];
-        const prices = [];
+        const sectorNames = [];
+        const sectorChanges = [];
+        const sectorColors = [];
         
-        {% for point in historical_data %}
-        dates.push("{{ point.date }}");
-        prices.push({{ point.close }});
+        {% for sector_key, sector_data in sector_performance.sectors.items() %}
+        sectorNames.push("{{ sector_data.name }}");
+        const changePercent = {{ sector_data.changePercent|default(0) }};
+        sectorChanges.push(changePercent);
+        sectorColors.push(changePercent >= 0 ? 'rgba(40, 167, 69, 0.7)' : 'rgba(220, 53, 69, 0.7)');
         {% endfor %}
         
-        const stockPriceChart = new Chart(stockCtx, {
-            type: 'line',
+        const sectorPerformanceChart = new Chart(sectorCtx, {
+            type: 'bar',
             data: {
-                labels: dates,
+                labels: sectorNames,
                 datasets: [{
-                    label: '{{ stock_data.symbol }} Price (₹)',
-                    data: prices,
-                    borderColor: {% if stock_data.day_change|float > 0 %}'#28a745'{% else %}'#dc3545'{% endif %},
-                    backgroundColor: 'rgba(0, 0, 0, 0)',
-                    borderWidth: 2,
-                    pointRadius: 1,
-                    pointHoverRadius: 5,
-                    tension: 0.2
+                    label: 'Sector Performance (%)',
+                    data: sectorChanges,
+                    backgroundColor: sectorColors,
+                    borderColor: sectorColors,
+                    borderWidth: 1
                 }]
             },
             options: {
+                indexAxis: 'y',
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
@@ -327,7 +385,9 @@
                         }
                     },
                     y: {
-                        beginAtZero: false
+                        grid: {
+                            display: false
+                        }
                     }
                 },
                 plugins: {
@@ -335,8 +395,12 @@
                         display: false
                     },
                     tooltip: {
-                        mode: 'index',
-                        intersect: false
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.x;
+                                return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+                            }
+                        }
                     }
                 }
             }

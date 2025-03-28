@@ -95,6 +95,30 @@ def get_market_summary():
     except Exception as e:
         logger.error(f"API error in get_market_summary: {e}")
         return jsonify({"error": str(e)}), 500
+        
+@api_bp.route('/market/indices', methods=['GET'])
+@login_required
+def get_market_indices():
+    try:
+        period = request.args.get('period', '1mo')
+        interval = request.args.get('interval', '1d')
+        category = request.args.get('category')
+        
+        indices_data = stock_client.get_all_market_indices(period=period, interval=interval, category=category)
+        return jsonify(indices_data)
+    except Exception as e:
+        logger.error(f"API error in get_market_indices: {e}")
+        return jsonify({"error": str(e)}), 500
+        
+@api_bp.route('/market/indices/categories', methods=['GET'])
+@login_required
+def get_indices_by_category():
+    try:
+        indices_by_category = stock_client.get_indices_by_category()
+        return jsonify(indices_by_category)
+    except Exception as e:
+        logger.error(f"API error in get_indices_by_category: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @api_bp.route('/sectors/performance', methods=['GET'])
 @login_required
@@ -217,6 +241,29 @@ def get_book_advice():
     except Exception as e:
         logger.error(f"API error in get_book_advice: {e}")
         return jsonify({"error": str(e)}), 500
+
+@api_bp.route('/historical-data/<symbol>', methods=['GET'])
+@login_required
+def get_historical_data_api(symbol):
+    try:
+        period = request.args.get('period', '1mo')
+        interval = request.args.get('interval', '1d')
+        
+        if not symbol:
+            return jsonify({"success": False, "error": "Symbol parameter is required"}), 400
+        
+        # Get stock data with the specified period
+        stock_data = stock_client.get_stock_data(symbol, period=period, interval=interval)
+        
+        # Extract historical data
+        historical_data = []
+        if 'historical_data' in stock_data:
+            historical_data = stock_data['historical_data']
+        
+        return jsonify({"success": True, "data": historical_data})
+    except Exception as e:
+        logger.error(f"API error in get_historical_data: {e}")
+        return jsonify({"success": False, "error": str(e)}), 500
 
 @api_bp.route('/watchlist/update', methods=['POST'])
 @login_required

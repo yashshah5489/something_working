@@ -7,7 +7,7 @@ from utils.groq_api import GroqLLMProcessor
 from utils.yahoo_finance_api import YahooFinanceAPI
 from utils.rag_processor import RAGProcessor
 from utils.langchain_tools import LangChainManager
-from config import DEFAULT_STOCKS
+from config import DEFAULT_STOCKS, INDIAN_MARKET_INDICES
 
 logger = logging.getLogger(__name__)
 
@@ -59,47 +59,87 @@ def dashboard():
 @main_bp.route('/stocks')
 @login_required
 def stocks():
-    """Stocks overview page route"""
+    """Market indices overview page route"""
     try:
-        # Get query parameters
-        symbol = request.args.get('symbol', 'NIFTY50')
-        exchange = request.args.get('exchange', 'NSE')
+        # Get category parameter
+        category = request.args.get('category')
         
-        # Redirect to stock detail page
-        return redirect(url_for('main.stock_detail', symbol=symbol))
+        # Get all market indices organized by category
+        indices_by_category = stock_client.get_indices_by_category()
+        
+        # Get sector performance for visualization
+        sector_performance = stock_client.get_sector_performance()
+        
+        # Get latest market news
+        market_news = news_client.get_latest_market_news(limit=5)
+        
+        return render_template(
+            'stocks.html',
+            indices_by_category=indices_by_category,
+            market_indices=INDIAN_MARKET_INDICES,
+            sector_performance=sector_performance,
+            market_news=market_news,
+            selected_category=category
+        )
         
     except Exception as e:
-        logger.error(f"Error loading stocks page: {e}")
-        flash("An error occurred while loading the stocks page", 'danger')
+        logger.error(f"Error loading market indices page: {e}")
+        flash("An error occurred while loading the market indices page", 'danger')
         return redirect(url_for('main.dashboard'))
 
 @main_bp.route('/stock/<symbol>')
 @login_required
 def stock_detail(symbol):
     try:
-        # Get stock data
-        stock_data = stock_client.get_stock_data(symbol, period="6mo")
+        # Get stock/index data
+        data = stock_client.get_stock_data(symbol, period="6mo")
         
-        # Get recent news about the stock
-        company_name = stock_data.get('info', {}).get('shortName', symbol)
-        stock_news = news_client.get_company_news(company_name, limit=5)
+        # Check if this is a market index
+        is_index = False
+        index_info = None
+        for index in INDIAN_MARKET_INDICES:
+            if index['symbol'] == symbol:
+                is_index = True
+                index_info = index
+                break
+                
+        # Add additional index information if available
+        if is_index and index_info:
+            data['info']['description'] = index_info.get('description', '')
+            data['info']['category'] = index_info.get('category', '')
+            data['info']['is_index'] = True
         
-        # Get stock analysis from LLM
-        stock_analysis = llm_client.analyze_stock(stock_data, symbol)
+        # Get recent news about the stock/index
+        entity_name = data.get('info', {}).get('shortName', symbol)
+        related_news = news_client.get_company_news(entity_name, limit=5)
         
-        # Check if stock is in user's watchlist
+        # Get analysis from LLM
+        analysis = llm_client.analyze_stock(data, symbol)
+        
+        # For indices, also get related sector data if it's a sector index
+        related_indices = []
+        if is_index:
+            # Get indices in the same category
+            for index in INDIAN_MARKET_INDICES:
+                if index['symbol'] != symbol and index.get('category') == data['info'].get('category'):
+                    related_indices.append(index)
+        
+        # Check if in user's watchlist
         in_watchlist = symbol in current_user.watchlist
         
         return render_template(
             'stock_analysis.html',
-            stock_data=stock_data,
-            stock_news=stock_news,
-            stock_analysis=stock_analysis,
-            in_watchlist=in_watchlist
+            data=data,
+            news=related_news,
+            analysis=analysis,
+            in_watchlist=in_watchlist,
+            is_index=is_index,
+            related_indices=related_indices,
+            index_info=index_info
         )
         
     except Exception as e:
-        logger.error(f"Error loading stock detail for {symbol}: {e}")
+        logger.error(f"Error loading detail for {symbol}: {e}")
         flash(f'An error occurred while loading data for {symbol}', 'danger')
         return redirect(url_for('main.dashboard'))
 
@@ -166,19 +206,35 @@ def watchlist():
         watchlist_symbols = current_user.watchlist
         
         if not watchlist_symbols:
-            # Show empty watchlist template
+            # Show empty watchlist template with suggestions
+            # Include both stocks and indices as suggestions
+            recommended_indices = [index for index in INDIAN_MARKET_INDICES if index['category'] == 'Broad Market'][:3]
             return render_template(
                 'watchlist.html',
                 watchlist_data=None,
-                default_stocks=DEFAULT_STOCKS
+                default_stocks=DEFAULT_STOCKS[:5],  # Show fewer default stocks
+                recommended_indices=recommended_indices  # Show recommended indices
             )
         
-        # Get data for watchlist stocks
+        # Get data for watchlist stocks/indices
         watchlist_data = stock_client.get_multiple_stocks(watchlist_symbols)
+        
+        # Flag items that are indices versus individual stocks
+        watchlist_indices = []
+        watchlist_stocks = []
+        for symbol in watchlist_symbols:
+            # Check if it's an index
+            is_index = any(index['symbol'] == symbol for index in INDIAN_MARKET_INDICES)
+            if is_index:
+                watchlist_indices.append(symbol)
+            else:
+                watchlist_stocks.append(symbol)
         
         return render_template(
             'watchlist.html',
-            watchlist_data=watchlist_data
+            watchlist_data=watchlist_data,
+            watchlist_indices=watchlist_indices,
+            watchlist_stocks=watchlist_stocks
         )
         
     except Exception as e:

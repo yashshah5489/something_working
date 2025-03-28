@@ -3,13 +3,14 @@ import pandas as pd
 import logging
 from datetime import datetime, timedelta
 import json
-from config import DEFAULT_STOCKS
+from config import DEFAULT_STOCKS, INDIAN_MARKET_INDICES
 
 logger = logging.getLogger(__name__)
 
 class YahooFinanceAPI:
     def __init__(self):
         self.default_stocks = DEFAULT_STOCKS
+        self.market_indices = INDIAN_MARKET_INDICES
     
     def get_stock_data(self, symbol, period="1mo", interval="1d"):
         """
@@ -260,6 +261,20 @@ class YahooFinanceAPI:
                     if 'error' not in stock_data:
                         results.append(stock_data['info'])
             
+            # Also search in market indices
+            for index in self.market_indices:
+                if (query.lower() in index['symbol'].lower() or 
+                    query.lower() in index['name'].lower()):
+                    
+                    # Get basic info about the index
+                    index_data = self.get_stock_data(index['symbol'])
+                    if 'error' not in index_data:
+                        # Add additional market index info
+                        index_data['info']['description'] = index.get('description', '')
+                        index_data['info']['category'] = index.get('category', '')
+                        index_data['info']['is_index'] = True
+                        results.append(index_data['info'])
+            
             # If we don't have enough results, we could expand the search
             # This would require a more comprehensive list of Indian stocks
             
@@ -278,3 +293,98 @@ class YahooFinanceAPI:
                 'results': [],
                 'timestamp': datetime.now().isoformat()
             }
+            
+    def get_all_market_indices(self, period="1mo", interval="1d", category=None):
+        """
+        Get data for all configured Indian market indices
+        
+        Args:
+            period (str): Period for historical data
+            interval (str): Data interval
+            category (str): Optional filter by category (Broad Market, Sector, Market Cap, Strategy)
+            
+        Returns:
+            dict: Data for all market indices
+        """
+        results = {}
+        
+        # Filter indices by category if provided
+        indices_to_fetch = self.market_indices
+        if category:
+            indices_to_fetch = [idx for idx in self.market_indices if idx.get('category') == category]
+        
+        for index in indices_to_fetch:
+            symbol = index['symbol']
+            try:
+                data = self.get_stock_data(symbol, period, interval)
+                
+                if 'info' in data:
+                    # Add additional index information
+                    data['info']['description'] = index.get('description', '')
+                    data['info']['category'] = index.get('category', '')
+                    data['info']['is_index'] = True
+                    results[symbol] = data
+                    
+            except Exception as e:
+                logger.error(f"Error fetching data for index {symbol}: {e}")
+                results[symbol] = {'error': str(e), 'symbol': symbol}
+        
+        return {
+            'indices': results,
+            'timestamp': datetime.now().isoformat(),
+            'count': len(results)
+        }
+    
+    def get_indices_by_category(self):
+        """
+        Get all market indices organized by category
+        
+        Returns:
+            dict: Indices organized by category
+        """
+        categories = {}
+        
+        for index in self.market_indices:
+            category = index.get('category', 'Other')
+            
+            if category not in categories:
+                categories[category] = []
+                
+            # Get basic index data
+            try:
+                ticker = yf.Ticker(index['symbol'])
+                info = ticker.info
+                hist = ticker.history(period="5d")
+                
+                if not hist.empty:
+                    change = hist['Close'].iloc[-1] - hist['Close'].iloc[-2]
+                    change_percent = (change / hist['Close'].iloc[-2]) * 100
+                else:
+                    change = None
+                    change_percent = None
+                
+                index_data = {
+                    'symbol': index['symbol'],
+                    'name': index['name'],
+                    'description': index.get('description', ''),
+                    'last': info.get('regularMarketPrice', None),
+                    'change': change,
+                    'changePercent': change_percent,
+                    'previousClose': info.get('regularMarketPreviousClose', None),
+                }
+                
+                categories[category].append(index_data)
+                
+            except Exception as e:
+                logger.error(f"Error fetching basic data for index {index['symbol']}: {e}")
+                categories[category].append({
+                    'symbol': index['symbol'],
+                    'name': index['name'],
+                    'description': index.get('description', ''),
+                    'error': str(e)
+                })
+        
+        return {
+            'categories': categories,
+            'timestamp': datetime.now().isoformat()
+        }

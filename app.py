@@ -52,6 +52,23 @@ with app.app_context():
 from utils.learning_helpers import register_learning_helpers
 register_learning_helpers(app)
 
+# Add custom Jinja filters
+from datetime import datetime
+@app.template_filter('timestamp_to_datetime')
+def timestamp_to_datetime(timestamp):
+    """Convert Unix timestamp to formatted datetime string"""
+    try:
+        return datetime.fromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
+    except (ValueError, TypeError):
+        return "Unknown"
+
+@app.template_filter('nl2br')
+def nl2br(text):
+    """Convert newlines to HTML line breaks"""
+    if not text:
+        return ""
+    return text.replace('\n', '<br>')
+
 # Register blueprints
 from routes.auth_routes import auth_bp
 from routes.learning_routes import learning_bp

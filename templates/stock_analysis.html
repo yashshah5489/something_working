@@ -1,0 +1,478 @@
+{% extends "layout.html" %}
+
+{% block head %}
+<style>
+    .card {
+        padding: 20px;
+        margin-bottom: 20px;
+        border-radius: 8px;
+    }
+    
+    .entity-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 20px;
+    }
+    
+    .entity-price {
+        font-size: 1.8rem;
+        font-weight: bold;
+    }
+    
+    .entity-change {
+        font-size: 1.2rem;
+        padding: 4px 8px;
+        border-radius: 4px;
+    }
+    
+    .change-positive {
+        background-color: rgba(40, 167, 69, 0.2);
+        color: #28a745;
+    }
+    
+    .change-negative {
+        background-color: rgba(220, 53, 69, 0.2);
+        color: #dc3545;
+    }
+    
+    .details {
+        display: flex;
+        flex-wrap: wrap;
+        margin-bottom: 20px;
+    }
+    
+    .detail-item {
+        flex: 1 1 25%;
+        min-width: 120px;
+        margin-bottom: 15px;
+    }
+    
+    .detail-label {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+    
+    .detail-value {
+        font-size: 1.1rem;
+        font-weight: 500;
+    }
+    
+    .chart-container {
+        height: 300px;
+        margin-bottom: 20px;
+    }
+    
+    .news-item {
+        margin-bottom: 15px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .news-item:last-child {
+        border-bottom: none;
+    }
+    
+    .index-list {
+        margin: 0;
+        padding: 0;
+        list-style-type: none;
+    }
+    
+    .index-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 10px 15px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        transition: all 0.2s ease;
+    }
+    
+    .index-item:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .watchlist-btn {
+        margin-left: 10px;
+    }
+    
+    .description-text {
+        font-size: 1rem;
+        line-height: 1.6;
+        margin-bottom: 20px;
+    }
+    
+    .historical-table {
+        width: 100%;
+        margin-bottom: 20px;
+    }
+    
+    .historical-table th {
+        font-weight: 500;
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .historical-table td {
+        padding: 10px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .historical-table tr:last-child td {
+        border-bottom: none;
+    }
+    
+    .time-filter {
+        display: flex;
+        margin-bottom: 15px;
+    }
+    
+    .time-filter button {
+        background: none;
+        border: none;
+        padding: 5px 10px;
+        margin-right: 10px;
+        border-radius: 4px;
+        color: #6c757d;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .time-filter button:hover {
+        background-color: rgba(255, 255, 255, 0.1);
+    }
+    
+    .time-filter button.active {
+        background-color: rgba(13, 110, 253, 0.2);
+        color: #0d6efd;
+        font-weight: 500;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex align-items-center mb-4">
+        <a href="{{ url_for('main.stocks') }}" class="btn btn-sm btn-outline-secondary me-3">
+            <i data-feather="arrow-left"></i> Back to Indices
+        </a>
+        <h1 class="h2 mb-0">
+            {{ data.info.shortName }} 
+            {% if is_index %}
+            <span class="badge bg-info">Market Index</span>
+            {% endif %}
+        </h1>
+        
+        <!-- Watchlist button -->
+        {% if in_watchlist %}
+        <form action="{{ url_for('main.remove_from_watchlist', symbol=data.info.symbol) }}" method="post" class="ms-auto">
+            <button type="submit" class="btn btn-sm btn-outline-danger">
+                <i data-feather="star"></i> Remove from Watchlist
+            </button>
+        </form>
+        {% else %}
+        <form action="{{ url_for('main.add_to_watchlist', symbol=data.info.symbol) }}" method="post" class="ms-auto">
+            <button type="submit" class="btn btn-sm btn-outline-primary">
+                <i data-feather="star"></i> Add to Watchlist
+            </button>
+        </form>
+        {% endif %}
+    </div>
+    
+    <div class="row">
+        <!-- Main Content Column -->
+        <div class="col-md-8">
+            <!-- Overview Card -->
+            <div class="card">
+                <div class="entity-header">
+                    <div>
+                        <h3>{{ data.info.shortName }} ({{ data.info.symbol }})</h3>
+                        {% if is_index %}
+                        <div>{{ data.info.get('category', 'Market Index') }}</div>
+                        {% else %}
+                        <div>{{ data.info.exchange }} • {{ data.info.sector }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="text-end">
+                        <div class="entity-price">
+                            {% if data.info.currency == 'INR' %}₹{% endif %}
+                            {{ "%.2f"|format(data.info.regularMarketPrice|float) }}
+                        </div>
+                        <div class="entity-change {{ 'change-positive' if data.info.regularMarketChangePercent|float > 0 else 'change-negative' }}">
+                            {{ "+" if data.info.regularMarketChangePercent|float > 0 else "" }}{{ "%.2f"|format(data.info.regularMarketChangePercent|float) }}%
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description for Indices -->
+                {% if is_index and data.info.description %}
+                <div class="description-text">
+                    {{ data.info.description }}
+                </div>
+                {% endif %}
+                
+                <div class="details">
+                    <div class="detail-item">
+                        <div class="detail-label">Previous Close</div>
+                        <div class="detail-value">
+                            {% if data.info.currency == 'INR' %}₹{% endif %}
+                            {{ "%.2f"|format(data.info.regularMarketPreviousClose|float) }}
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Day Range</div>
+                        <div class="detail-value">
+                            {% if data.info.currency == 'INR' %}₹{% endif %}
+                            {{ "%.2f"|format(data.info.regularMarketDayLow|float) }} - 
+                            {{ "%.2f"|format(data.info.regularMarketDayHigh|float) }}
+                        </div>
+                    </div>
+                    {% if not is_index %}
+                    <div class="detail-item">
+                        <div class="detail-label">Volume</div>
+                        <div class="detail-value">{{ '{:,.0f}'.format(data.info.regularMarketVolume|float) }}</div>
+                    </div>
+                    {% endif %}
+                    {% if data.info.fiftyTwoWeekHigh %}
+                    <div class="detail-item">
+                        <div class="detail-label">52 Week High</div>
+                        <div class="detail-value">
+                            {% if data.info.currency == 'INR' %}₹{% endif %}
+                            {{ "%.2f"|format(data.info.fiftyTwoWeekHigh|float) }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if data.info.fiftyTwoWeekLow %}
+                    <div class="detail-item">
+                        <div class="detail-label">52 Week Low</div>
+                        <div class="detail-value">
+                            {% if data.info.currency == 'INR' %}₹{% endif %}
+                            {{ "%.2f"|format(data.info.fiftyTwoWeekLow|float) }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if data.info.marketCap and not is_index %}
+                    <div class="detail-item">
+                        <div class="detail-label">Market Cap</div>
+                        <div class="detail-value">₹{{ '{:,.0f}'.format(data.info.marketCap|float / 10000000) }} Cr</div>
+                    </div>
+                    {% endif %}
+                    <div class="detail-item">
+                        <div class="detail-label">Last Updated</div>
+                        <div class="detail-value">
+                            {{ data.info.regularMarketTime|int|timestamp_to_datetime }}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Time Period Filter -->
+                <div class="time-filter">
+                    <button class="time-period active" data-period="1mo">1M</button>
+                    <button class="time-period" data-period="3mo">3M</button>
+                    <button class="time-period" data-period="6mo">6M</button>
+                    <button class="time-period" data-period="1y">1Y</button>
+                    <button class="time-period" data-period="5y">5Y</button>
+                    <button class="time-period" data-period="max">Max</button>
+                </div>
+                
+                <!-- Price Chart -->
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+            
+            <!-- AI Analysis Card -->
+            <div class="card">
+                <h3>AI Analysis</h3>
+                <div id="analysis">
+                    {{ analysis|nl2br|safe }}
+                </div>
+            </div>
+            
+            <!-- Related News Card -->
+            <div class="card">
+                <h3>Market News</h3>
+                <div class="news-container">
+                    {% for article in news %}
+                    <div class="news-item">
+                        <h5><a href="{{ article.url }}" target="_blank">{{ article.title }}</a></h5>
+                        <p>{{ article.summary[:150] }}{% if article.summary|length > 150 %}...{% endif %}</p>
+                        <small class="text-muted">
+                            {{ article.source }} • 
+                            {% if article.published_date is string %}
+                                {{ article.published_date.split('T')[0] }}
+                            {% else %}
+                                {{ article.published_date.strftime('%Y-%m-%d') }}
+                            {% endif %}
+                        </small>
+                    </div>
+                    {% else %}
+                    <p>No related news available.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sidebar Column -->
+        <div class="col-md-4">
+            {% if is_index %}
+            <!-- Related Indices Card (for indices) -->
+            <div class="card">
+                <h3>Related Indices</h3>
+                <ul class="index-list">
+                    {% for index in related_indices %}
+                    <li class="index-item">
+                        <div>
+                            <a href="{{ url_for('main.stock_detail', symbol=index.symbol) }}">
+                                {{ index.name }}
+                            </a>
+                            <div class="small text-muted">{{ index.category }}</div>
+                        </div>
+                        <div>
+                            <span>{{ index.last }}</span>
+                            <span class="{{ 'change-positive' if index.change > 0 else 'change-negative' }}">
+                                {{ "+" if index.change > 0 else "" }}{{ index.change }}%
+                            </span>
+                        </div>
+                    </li>
+                    {% else %}
+                    <li>No related indices available</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+            
+            <!-- Historical Data Card -->
+            <div class="card">
+                <h3>Historical Data</h3>
+                <table class="historical-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Close</th>
+                            <th>Change</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% if data.historical_data %}
+                            {% for point in data.historical_data[:7] %}
+                            <tr>
+                                <td>{{ point.date }}</td>
+                                <td>
+                                    {% if data.info.currency == 'INR' %}₹{% endif %}
+                                    {{ "%.2f"|format(point.close|float) }}
+                                </td>
+                                <td class="{{ 'text-success' if point.change|float > 0 else 'text-danger' }}">
+                                    {{ "+" if point.change|float > 0 else "" }}{{ "%.2f"|format(point.change|float) }}%
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% else %}
+                            <tr>
+                                <td colspan="3">No historical data available</td>
+                            </tr>
+                        {% endif %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Feather icons
+        feather.replace();
+        
+        // Price Chart
+        const priceCtx = document.getElementById('priceChart').getContext('2d');
+        
+        // Prepare data for chart
+        const dates = [];
+        const prices = [];
+        
+        {% if data.historical_data %}
+        {% for point in data.historical_data %}
+        dates.push("{{ point.date }}");
+        prices.push({{ point.close }});
+        {% endfor %}
+        {% endif %}
+        
+        const priceChart = new Chart(priceCtx, {
+            type: 'line',
+            data: {
+                labels: dates,
+                datasets: [{
+                    label: '{{ data.info.symbol }} Price',
+                    data: prices,
+                    borderColor: {% if data.info.regularMarketChangePercent|float > 0 %}'#28a745'{% else %}'#dc3545'{% endif %},
+                    backgroundColor: 'rgba(0, 0, 0, 0)',
+                    borderWidth: 2,
+                    pointRadius: 1,
+                    pointHoverRadius: 5,
+                    tension: 0.2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    },
+                    y: {
+                        beginAtZero: false
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        mode: 'index',
+                        intersect: false
+                    }
+                }
+            }
+        });
+        
+        // Time period filter
+        const timeButtons = document.querySelectorAll('.time-period');
+        timeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                // Update active button
+                timeButtons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Get time period
+                const period = this.getAttribute('data-period');
+                
+                // Fetch new data
+                fetch(`/api/historical-data/${encodeURIComponent('{{ data.info.symbol }}').replace('/', '%2F')}?period=${period}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Update chart
+                            const newDates = [];
+                            const newPrices = [];
+                            
+                            data.data.forEach(point => {
+                                newDates.push(point.date);
+                                newPrices.push(point.close);
+                            });
+                            
+                            priceChart.data.labels = newDates;
+                            priceChart.data.datasets[0].data = newPrices;
+                            priceChart.update();
+                        }
+                    })
+                    .catch(error => console.error('Error fetching historical data:', error));
+            });
+        });
+    });
+</script>
+{% endblock %}

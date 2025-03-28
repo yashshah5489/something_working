@@ -18,7 +18,7 @@ GROQ_MODEL_NAME = "llama3-70b-8192"
 INDIAN_STOCK_EXCHANGES = ["NSE", "BSE"]
 DEFAULT_STOCK_EXCHANGE = "NSE"
 
-# Default stocks for recommendation
+# Default stocks for recommendation (keeping as historical reference)
 DEFAULT_STOCKS = [
     {"symbol": "RELIANCE.NS", "name": "Reliance Industries", "exchange": "NSE"},
     {"symbol": "TCS.NS", "name": "Tata Consultancy Services", "exchange": "NSE"},
@@ -30,6 +30,26 @@ DEFAULT_STOCKS = [
     {"symbol": "BHARTIARTL.NS", "name": "Bharti Airtel", "exchange": "NSE"},
     {"symbol": "BAJFINANCE.NS", "name": "Bajaj Finance", "exchange": "NSE"},
     {"symbol": "ICICIBANK.NS", "name": "ICICI Bank", "exchange": "NSE"}
+]
+
+# Indian Market Indices (Main focus of the application)
+INDIAN_MARKET_INDICES = [
+    {"symbol": "^NSEI", "name": "Nifty 50", "description": "Benchmark index representing the weighted average of 50 of the largest Indian companies listed on NSE", "category": "Broad Market"},
+    {"symbol": "^BSESN", "name": "BSE Sensex", "description": "Benchmark index of 30 well-established and financially sound companies listed on BSE", "category": "Broad Market"},
+    {"symbol": "NIFTY BANK.NS", "name": "Nifty Bank", "description": "Index of the most liquid and large Indian banking stocks", "category": "Sector"},
+    {"symbol": "NIFTY IT.NS", "name": "Nifty IT", "description": "Index tracking performance of IT companies listed on NSE", "category": "Sector"},
+    {"symbol": "NIFTY PHARMA.NS", "name": "Nifty Pharma", "description": "Index tracking performance of pharmaceutical companies", "category": "Sector"},
+    {"symbol": "NIFTY AUTO.NS", "name": "Nifty Auto", "description": "Index tracking auto and auto component companies", "category": "Sector"},
+    {"symbol": "NIFTY FMCG.NS", "name": "Nifty FMCG", "description": "Index tracking companies in the fast-moving consumer goods sector", "category": "Sector"},
+    {"symbol": "NIFTY METAL.NS", "name": "Nifty Metal", "description": "Index tracking companies in the metals sector", "category": "Sector"},
+    {"symbol": "NIFTY REALTY.NS", "name": "Nifty Realty", "description": "Index tracking real estate companies", "category": "Sector"},
+    {"symbol": "NIFTY ENERGY.NS", "name": "Nifty Energy", "description": "Index tracking energy sector companies", "category": "Sector"},
+    {"symbol": "^NSMIDCP", "name": "Nifty Midcap 100", "description": "Index representing the midcap segment of the market", "category": "Market Cap"},
+    {"symbol": "^NSEMDCP50", "name": "Nifty Midcap 50", "description": "Index of the top 50 midcap companies", "category": "Market Cap"},
+    {"symbol": "^CNXSMCAP", "name": "Nifty Smallcap 100", "description": "Index representing the smallcap segment of the market", "category": "Market Cap"},
+    {"symbol": "NIFTY DIV OPPS 50.NS", "name": "Nifty Dividend Opportunities 50", "description": "Index tracking high dividend yield companies", "category": "Strategy"},
+    {"symbol": "NIFTY100 LOWVOL30.NS", "name": "Nifty100 Low Volatility 30", "description": "Index tracking low volatility companies from Nifty 100", "category": "Strategy"},
+    {"symbol": "NIFTY100 QUAL30.NS", "name": "Nifty100 Quality 30", "description": "Index tracking high quality companies from Nifty 100", "category": "Strategy"}
 ]
 
 # News sources for India
