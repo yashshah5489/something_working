@@ -36,10 +36,16 @@ def register():
             flash('Passwords do not match', 'danger')
             return render_template('register.html')
         
-        # Check if user already exists
-        existing_user = User.query.filter_by(email=email).first()
-        if existing_user:
+        # Check if user already exists - email check
+        existing_email = User.query.filter_by(email=email).first()
+        if existing_email:
             flash('Email already registered', 'danger')
+            return render_template('register.html')
+            
+        # Check if username already exists
+        existing_username = User.query.filter_by(username=username).first()
+        if existing_username:
+            flash('Username already taken. Please choose a different username', 'danger')
             return render_template('register.html')
         
         # Create new user
@@ -138,7 +144,15 @@ def register():
         except Exception as e:
             db.session.rollback()
             logger.error(f"Error registering user: {e}")
-            flash('An error occurred during registration', 'danger')
+            
+            # More specific error message
+            if "duplicate key" in str(e).lower() and "username" in str(e).lower():
+                flash('Username already exists. Please choose a different username.', 'danger')
+            elif "duplicate key" in str(e).lower() and "email" in str(e).lower():
+                flash('Email already registered. Please use a different email.', 'danger')
+            else:
+                flash('An error occurred during registration. Please try again.', 'danger')
+                
             return render_template('register.html')
     
     return render_template('register.html')
@@ -205,6 +219,13 @@ def profile():
             existing_user = User.query.filter_by(email=email).first()
             if existing_user and existing_user.id != current_user.id:
                 flash('Email already in use by another account', 'danger')
+                return redirect(url_for('auth.profile'))
+                
+        # Check if username is already taken by another user
+        if username != current_user.username:
+            existing_username = User.query.filter_by(username=username).first()
+            if existing_username and existing_username.id != current_user.id:
+                flash('Username already taken by another account', 'danger')
                 return redirect(url_for('auth.profile'))
         
         # Update preferences as a dictionary
