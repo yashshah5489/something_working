@@ -1,0 +1,93 @@
+kieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2025-03-28 07:37:57,070 - yfinance - DEBUG - loaded persistent cookie
+2025-03-28 07:37:57,070 - yfinance - DEBUG - reusing cookie
+2025-03-28 07:37:57,138 - urllib3.connectionpool - DEBUG - https://query1.finance.yahoo.com:443 "GET /v1/test/getcrumb HTTP/1.1" 200 11
+2025-03-28 07:37:57,139 - yfinance - DEBUG - crumb = 'rAUcAvsQKCE'
+2025-03-28 07:37:57,139 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-03-28 07:37:57,140 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-03-28 07:37:57,208 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NIFTY%20METAL.NS?range=1d&interval=1d&crumb=rAUcAvsQKCE HTTP/1.1" 404 108
+2025-03-28 07:37:57,208 - yfinance - DEBUG - response code=404
+2025-03-28 07:37:57,208 - yfinance - DEBUG -    Exiting _make_request()
+2025-03-28 07:37:57,208 - yfinance - DEBUG -   Exiting get()
+2025-03-28 07:37:57,208 - yfinance - DEBUG - Got error from yahoo api for ticker NIFTY METAL.NS, Error: {'code': 'Not Found', 'description': 'No data found, symbol may be delisted'}
+2025-03-28 07:37:57,208 - yfinance - DEBUG -  Exiting _fetch_ticker_tz()
+2025-03-28 07:37:57,208 - yfinance - DEBUG -  Entering history()
+2025-03-28 07:37:57,208 - yfinance - DEBUG - NIFTY METAL.NS: Yahoo GET parameters: {'range': '1mo', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-03-28 07:37:57,208 - yfinance - DEBUG -   Entering get()
+2025-03-28 07:37:57,208 - yfinance - DEBUG -    Entering _make_request()
+2025-03-28 07:37:57,209 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v8/finance/chart/NIFTY METAL.NS
+2025-03-28 07:37:57,209 - yfinance - DEBUG - params={'range': '1mo', 'interval': '1d', 'includePrePost': False, 'events': 'div,splits,capitalGains'}
+2025-03-28 07:37:57,209 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-03-28 07:37:57,209 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-03-28 07:37:57,209 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-03-28 07:37:57,209 - yfinance - DEBUG - reusing cookie
+2025-03-28 07:37:57,209 - yfinance - DEBUG - reusing crumb
+2025-03-28 07:37:57,209 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-03-28 07:37:57,209 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-03-28 07:37:57,279 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NIFTY%20METAL.NS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=rAUcAvsQKCE HTTP/1.1" 404 108
+2025-03-28 07:37:57,279 - yfinance - DEBUG - response code=404
+2025-03-28 07:37:57,280 - yfinance - DEBUG - toggling cookie strategy basic -> csrf
+2025-03-28 07:37:57,280 - yfinance - DEBUG -     Entering _get_cookie_and_crumb()
+2025-03-28 07:37:57,280 - yfinance - DEBUG - cookie_mode = 'csrf'
+2025-03-28 07:37:57,280 - yfinance - DEBUG -      Entering _get_crumb_csrf()
+2025-03-28 07:37:57,280 - peewee - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['csrf', 1, 0])
+2025-03-28 07:37:57,378 - urllib3.connectionpool - DEBUG - https://guce.yahoo.com:443 "GET /consent HTTP/1.1" 302 0
+2025-03-28 07:37:57,836 - urllib3.connectionpool - DEBUG - https://www.yahoo.com:443 "GET /?guccounter=1 HTTP/1.1" 200 None
+2025-03-28 07:37:57,904 - yfinance - DEBUG - Failed to find "csrfToken" in response
+2025-03-28 07:37:57,904 - yfinance - DEBUG -      Exiting _get_crumb_csrf()
+2025-03-28 07:37:57,904 - yfinance - DEBUG - toggling cookie strategy csrf -> basic
+2025-03-28 07:37:57,904 - yfinance - DEBUG -      Entering _get_cookie_and_crumb_basic()
+2025-03-28 07:37:57,905 - peewee - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2025-03-28 07:37:57,905 - yfinance - DEBUG - loaded persistent cookie
+2025-03-28 07:37:57,905 - yfinance - DEBUG - reusing cookie
+2025-03-28 07:37:57,965 - urllib3.connectionpool - DEBUG - https://query1.finance.yahoo.com:443 "GET /v1/test/getcrumb HTTP/1.1" 200 11
+2025-03-28 07:37:57,966 - yfinance - DEBUG - crumb = 'rAUcAvsQKCE'
+2025-03-28 07:37:57,966 - yfinance - DEBUG -      Exiting _get_cookie_and_crumb_basic()
+2025-03-28 07:37:57,966 - yfinance - DEBUG -     Exiting _get_cookie_and_crumb()
+2025-03-28 07:37:58,056 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v8/finance/chart/NIFTY%20METAL.NS?range=1mo&interval=1d&includePrePost=False&events=div%2Csplits%2CcapitalGains&crumb=rAUcAvsQKCE HTTP/1.1" 404 108
+2025-03-28 07:37:58,056 - yfinance - DEBUG - response code=404
+2025-03-28 07:37:58,056 - yfinance - DEBUG -    Exiting _make_request()
+2025-03-28 07:37:58,056 - yfinance - DEBUG -   Exiting get()
+2025-03-28 07:37:58,056 - yfinance - ERROR - $NIFTY METAL.NS: possibly delisted; no price data found  (period=1mo) (Yahoo error = "No data found, symbol may be delisted")
+2025-03-28 07:37:58,057 - yfinance - DEBUG -  Exiting history()
+2025-03-28 07:37:58,057 - yfinance - DEBUG - Exiting history()
+2025-03-28 07:37:58,057 - yfinance - DEBUG - get_raw_json(): https://query2.finance.yahoo.com/v10/finance/quoteSummary/NIFTY METAL.NS
+2025-03-28 07:37:58,057 - yfinance - DEBUG - Entering get()
+2025-03-28 07:37:58,057 - yfinance - DEBUG -  Entering _make_request()
+2025-03-28 07:37:58,057 - yfinance - DEBUG - url=https://query2.finance.yahoo.com/v10/finance/quoteSummary/NIFTY METAL.NS
+2025-03-28 07:37:58,057 - yfinance - DEBUG - params={'modules': 'financialData,quoteType,defaultKeyStatistics,assetProfile,summaryDetail', 'corsDomain': 'finance.yahoo.com', 'formatted': 'false', 'symbol': 'NIFTY METAL.NS'}
+2025-03-28 07:37:58,057 - yfinance - DEBUG -   Entering _get_cookie_and_crumb()
+2025-03-28 07:37:58,057 - yfinance - DEBUG - cookie_mode = 'basic'
+2025-03-28 07:37:58,057 - yfinance - DEBUG -    Entering _get_cookie_and_crumb_basic()
+2025-03-28 07:37:58,057 - yfinance - DEBUG - reusing cookie
+2025-03-28 07:37:58,057 - yfinance - DEBUG - reusing crumb
+2025-03-28 07:37:58,057 - yfinance - DEBUG -    Exiting _get_cookie_and_crumb_basic()
+2025-03-28 07:37:58,057 - yfinance - DEBUG -   Exiting _get_cookie_and_crumb()
+2025-03-28 07:37:58,122 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v10/finance/quoteSummary/NIFTY%20METAL.NS?modules=financialData%2CquoteType%2CdefaultKeyStatistics%2CassetProfile%2CsummaryDetail&corsDomain=finance.yahoo.com&formatted=false&symbol=NIFTY+METAL.NS&crumb=rAUcAvsQKCE HTTP/1.1" 404 120
+2025-03-28 07:37:58,122 - yfinance - DEBUG - response code=404
+2025-03-28 07:37:58,122 - yfinance - DEBUG - toggling cookie strategy basic -> csrf
+2025-03-28 07:37:58,122 - yfinance - DEBUG -   Entering _get_cookie_and_crumb()
+2025-03-28 07:37:58,122 - yfinance - DEBUG - cookie_mode = 'csrf'
+2025-03-28 07:37:58,122 - yfinance - DEBUG -    Entering _get_crumb_csrf()
+2025-03-28 07:37:58,123 - peewee - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['csrf', 1, 0])
+2025-03-28 07:37:58,223 - urllib3.connectionpool - DEBUG - https://guce.yahoo.com:443 "GET /consent HTTP/1.1" 302 0
+2025-03-28 07:37:58,450 - urllib3.connectionpool - DEBUG - https://www.yahoo.com:443 "GET /?guccounter=1 HTTP/1.1" 200 None
+2025-03-28 07:37:58,539 - yfinance - DEBUG - Failed to find "csrfToken" in response
+2025-03-28 07:37:58,539 - yfinance - DEBUG -    Exiting _get_crumb_csrf()
+2025-03-28 07:37:58,539 - yfinance - DEBUG - toggling cookie strategy csrf -> basic
+2025-03-28 07:37:58,540 - yfinance - DEBUG -    Entering _get_cookie_and_crumb_basic()
+2025-03-28 07:37:58,540 - peewee - DEBUG - ('SELECT "t1"."strategy", "t1"."fetch_date", "t1"."cookie_bytes" FROM "_cookieschema" AS "t1" WHERE ("t1"."strategy" = ?) LIMIT ? OFFSET ?', ['basic', 1, 0])
+2025-03-28 07:37:58,540 - yfinance - DEBUG - loaded persistent cookie
+2025-03-28 07:37:58,540 - yfinance - DEBUG - reusing cookie
+2025-03-28 07:37:58,619 - urllib3.connectionpool - DEBUG - https://query1.finance.yahoo.com:443 "GET /v1/test/getcrumb HTTP/1.1" 200 11
+2025-03-28 07:37:58,619 - yfinance - DEBUG - crumb = 'rAUcAvsQKCE'
+2025-03-28 07:37:58,619 - yfinance - DEBUG -    Exiting _get_cookie_and_crumb_basic()
+2025-03-28 07:37:58,619 - yfinance - DEBUG -   Exiting _get_cookie_and_crumb()
+2025-03-28 07:37:58,655 - urllib3.connectionpool - DEBUG - https://query2.finance.yahoo.com:443 "GET /v10/finance/quoteSummary/NIFTY%20METAL.NS?modules=financialData%2CquoteType%2CdefaultKeyStatistics%2CassetProfile%2CsummaryDetail&corsDomain=finance.yahoo.com&formatted=false&symbol=NIFTY+METAL.NS&crumb=rAUcAvsQKCE HTTP/1.1" 404 120
+2025-03-28 07:37:58,656 - yfinance - DEBUG - response code=404
+2025-03-28 07:37:58,656 - yfinance - DEBUG -  Exiting _make_request()
+2025-03-28 07:37:58,656 - yfinance - DEBUG - Exiting get()
+2025-03-28 07:37:58,656 - yfinance - ERROR - 404 Client Error: Not Found for url: https://query2.finance.yahoo.com/v10/finance/quoteSummary/NIFTY%20METAL.NS?modules=financialData%2CquoteType%2CdefaultKeyStatistics%2CassetProfile%2CsummaryDetail&corsDomain=finance.yahoo.com&formatted=false&symbol=NIFTY+METAL.NS&crumb=rAUcAvsQKCE
+2025-03-28 07:37:58,656 - utils.yahoo_finance_api - ERROR - Error fetching stock data for NIFTY METAL.NS: 'NoneType' object has no attribute 'update'
+2025-03-28 07:37:58,656 - yfinance - DEBUG - Entering history()
+2025-03-28 07:37:58,656 - peewee - DEBUG - ('SELECT "t1"."key", "t1"."value" FROM "_kv" AS "t1" WHERE ("t1"."key" = ?) LIMIT ? OFFSET ?', ['NIFTY REALTY.NS', 1, 0])

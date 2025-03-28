@@ -135,7 +135,7 @@
             <div class="dashboard-card">
                 <h3>Latest Financial News</h3>
                 <div class="news-container">
-                    {% for news in recent_news[:5] %}
+                    {% for news in latest_news[:5] if latest_news %}
                     <div class="news-item">
                         <h5><a href="{{ news.url }}" target="_blank">{{ news.title }}</a></h5>
                         <p>{{ news.summary[:150] }}{% if news.summary|length > 150 %}...{% endif %}</p>

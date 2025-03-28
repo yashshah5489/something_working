@@ -54,7 +54,15 @@ def dashboard():
     except Exception as e:
         logger.error(f"Error loading dashboard: {e}")
         flash('An error occurred while loading the dashboard', 'danger')
-        return render_template('dashboard.html')
+        # Provide empty data to prevent template errors
+        return render_template(
+            'dashboard.html',
+            market_summary={},
+            latest_news=[],
+            watchlist_data={},
+            sector_performance=[],
+            regulatory_updates=[]
+        )
 
 @main_bp.route('/stocks')
 @login_required

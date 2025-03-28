@@ -25,13 +25,48 @@ class YahooFinanceAPI:
             dict: Stock data including price history and basic info
         """
         try:
+            original_symbol = symbol
+            
+            # Special handling for market indices with spaces in their names
+            # yfinance has trouble with spaces in ticker symbols
+            if ' ' in symbol:
+                # For indices in our pre-defined list, we can handle them specially
+                for index in self.market_indices:
+                    if index['symbol'] == symbol:
+                        # Create a stub response with the basic information from our config
+                        # This avoids the Yahoo Finance API errors with spaces in symbols
+                        return {
+                            'info': {
+                                'symbol': index['symbol'],
+                                'shortName': index['name'],
+                                'longName': index['name'],
+                                'sector': 'Index',
+                                'industry': index.get('category', 'Market Index'),
+                                'description': index.get('description', ''),
+                                'is_index': True,
+                                'previousClose': 0,
+                                'regularMarketPrice': 0,
+                                'regularMarketChange': 0,
+                                'regularMarketChangePercent': 0,
+                                'regularMarketVolume': 0,
+                                'fiftyTwoWeekHigh': 0,
+                                'fiftyTwoWeekLow': 0,
+                            },
+                            'history': [],
+                            'message': f"Using pre-defined data for index with spaces in symbol: {symbol}"
+                        }
+            
+            # Normal processing for standard symbols 
             # Add .NS suffix if not already present for NSE stocks
             if '.NS' not in symbol and '.BO' not in symbol:
                 # Check if it's likely an Indian stock
                 if any(char.isalpha() for char in symbol):
                     symbol = f"{symbol}.NS"
             
-            stock = yf.Ticker(symbol)
+            # Replace spaces with dashes for Yahoo Finance API
+            yf_symbol = symbol.replace(' ', '-')
+            
+            stock = yf.Ticker(yf_symbol)
             
             # Get historical data
             hist = stock.history(period=period, interval=interval)
@@ -137,7 +172,36 @@ class YahooFinanceAPI:
         results = {}
         for index in indices:
             try:
-                ticker = yf.Ticker(index)
+                # Special handling for indices with spaces
+                if ' ' in index:
+                    # Find the index in our predefined list
+                    index_info = None
+                    for idx in self.market_indices:
+                        if idx['symbol'] == index:
+                            index_info = idx
+                            break
+                            
+                    if index_info:
+                        # Use predefined info for indices with spaces
+                        results[index] = {
+                            'name': index_info.get('name', ''),
+                            'last': 0,  # Placeholder value
+                            'change': 0,
+                            'changePercent': 0,
+                            'previousClose': 0,
+                            'open': 0,
+                            'dayHigh': 0,
+                            'dayLow': 0,
+                            'description': index_info.get('description', ''),
+                            'category': index_info.get('category', ''),
+                            'is_index': True
+                        }
+                        continue
+                        
+                # For regular indices without spaces
+                # Replace spaces with dashes for Yahoo Finance API
+                yf_symbol = index.replace(' ', '-')
+                ticker = yf.Ticker(yf_symbol)
                 info = ticker.info
                 hist = ticker.history(period="5d")
                 
@@ -160,7 +224,7 @@ class YahooFinanceAPI:
                 }
             except Exception as e:
                 logger.error(f"Error fetching data for index {index}: {e}")
-                results[index] = {'error': str(e)}
+                results[index] = {'error': str(e), 'name': index}
         
         return {
             'indices': results,
@@ -352,7 +416,26 @@ class YahooFinanceAPI:
                 
             # Get basic index data
             try:
-                ticker = yf.Ticker(index['symbol'])
+                symbol = index['symbol']
+                
+                # Special handling for indices with spaces
+                if ' ' in symbol:
+                    # For indices with spaces, use the predefined data
+                    index_data = {
+                        'symbol': symbol,
+                        'name': index['name'],
+                        'description': index.get('description', ''),
+                        'last': 0,  # Placeholder values
+                        'change': 0,
+                        'changePercent': 0,
+                        'previousClose': 0,
+                    }
+                    categories[category].append(index_data)
+                    continue
+                
+                # For regular indices without spaces
+                yf_symbol = symbol.replace(' ', '-')
+                ticker = yf.Ticker(yf_symbol)
                 info = ticker.info
                 hist = ticker.history(period="5d")
                 
@@ -364,7 +447,7 @@ class YahooFinanceAPI:
                     change_percent = None
                 
                 index_data = {
-                    'symbol': index['symbol'],
+                    'symbol': symbol,
                     'name': index['name'],
                     'description': index.get('description', ''),
                     'last': info.get('regularMarketPrice', None),
