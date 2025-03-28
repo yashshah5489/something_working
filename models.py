@@ -27,6 +27,24 @@ class User(UserMixin, db.Model):
         "learning_notifications": True
     })
     
+    @property
+    def watchlist(self):
+        """
+        Getter for watchlist property - returns the stock_watchlist from preferences
+        """
+        if self.preferences and "stock_watchlist" in self.preferences:
+            return self.preferences["stock_watchlist"]
+        return []
+        
+    @watchlist.setter
+    def watchlist(self, value):
+        """
+        Setter for watchlist property - updates the stock_watchlist in preferences
+        """
+        if not self.preferences:
+            self.preferences = {}
+        self.preferences["stock_watchlist"] = value
+    
     # Personal profile for personalization (all optional)
     personal_profile = db.Column(db.JSON, default={
         "age_group": None,                 # "18-25", "26-35", "36-45", "46-55", "56+"

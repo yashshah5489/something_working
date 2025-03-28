@@ -20,6 +20,13 @@ def register():
         password = request.form.get('password')
         confirm_password = request.form.get('confirm_password')
         
+        # Get personalization preferences
+        experience_level = request.form.get('experience_level', 'Beginner')
+        risk_profile = request.form.get('risk_profile', 'Moderate')
+        daily_tip = 'daily_tip' in request.form
+        dark_mode = 'dark_mode' in request.form
+        skip_onboarding = 'skip_onboarding' in request.form
+        
         # Validate input
         if not username or not email or not password:
             flash('All fields are required', 'danger')
@@ -37,18 +44,25 @@ def register():
         
         # Create new user
         try:
-            # Set default preferences
+            # Set user preferences with form values
             default_preferences = {
                 "stock_watchlist": [],
                 "favorite_sectors": [],
-                "risk_profile": "Moderate",
+                "risk_profile": risk_profile,
                 "investment_horizon": "Medium Term",
-                "dark_mode": True,
-                "daily_tip": True,
+                "dark_mode": dark_mode,
+                "daily_tip": daily_tip,
                 "learning_notifications": True,
                 "default_market": "NSE"
             }
             
+            # Determine risk tolerance score based on risk profile
+            risk_tolerance_score = 5  # Default moderate
+            if risk_profile == "Conservative":
+                risk_tolerance_score = 3
+            elif risk_profile == "Aggressive":
+                risk_tolerance_score = 8
+                
             # Set default personal profile
             default_personal_profile = {
                 "age_group": None,
@@ -56,25 +70,34 @@ def register():
                 "occupation": None,
                 "industry": None,
                 "location": None,
-                "experience_level": "Beginner",
+                "experience_level": experience_level,
                 "financial_goals": [],
                 "existing_investments": [],
                 "monthly_expenses": None,
                 "loan_emi": None,
-                "risk_tolerance_score": 5,
-                "investment_timeline": None,
+                "risk_tolerance_score": risk_tolerance_score,
                 "tax_bracket": None,
                 "preferred_learning_style": "Text",
-                "onboarding_completed": False
+                "onboarding_completed": skip_onboarding  # Mark as completed if skipping
             }
             
-            # Set default learning progress
+            # Set learning progress based on experience level
+            difficulty_level = "Beginner"
+            learning_path = "Basics"
+            
+            if experience_level == "Intermediate":
+                difficulty_level = "Intermediate"
+                learning_path = "Intermediate"
+            elif experience_level == "Advanced":
+                difficulty_level = "Advanced"
+                learning_path = "Advanced"
+                
             default_learning_progress = {
                 "completed_topics": [],
                 "bookmarked_resources": [],
                 "quiz_scores": {},
-                "current_learning_path": "Basics",
-                "difficulty_level": "Beginner",
+                "current_learning_path": learning_path,
+                "difficulty_level": difficulty_level,
                 "daily_quiz": True
             }
             
@@ -104,8 +127,13 @@ def register():
             # Log in the user
             login_user(new_user)
             
-            flash('Registration successful! Let\'s personalize your experience', 'success')
-            return redirect(url_for('auth.onboarding'))
+            # Redirect based on skip_onboarding preference
+            if skip_onboarding:
+                flash('Registration successful! Welcome to Smart Financial Analyzer', 'success')
+                return redirect(url_for('main.dashboard'))
+            else:
+                flash('Registration successful! Let\'s personalize your experience', 'success')
+                return redirect(url_for('auth.onboarding'))
             
         except Exception as e:
             db.session.rollback()
@@ -414,15 +442,6 @@ def save_onboarding():
     financial_goals = request.form.get('financial_goals', '')
     financial_goals = financial_goals.split(',') if financial_goals else []
     
-    investment_timeline = request.form.get('investment_timeline', '')
-    if investment_timeline and investment_timeline.strip():
-        try:
-            investment_timeline = int(investment_timeline)
-        except ValueError:
-            investment_timeline = None
-    else:
-        investment_timeline = None
-    
     risk_tolerance_score = request.form.get('risk_tolerance_score', '5')
     try:
         risk_tolerance_score = int(risk_tolerance_score)
@@ -450,7 +469,6 @@ def save_onboarding():
         'monthly_expenses': monthly_expenses,
         'loan_emi': loan_emi,
         'risk_tolerance_score': risk_tolerance_score,
-        'investment_timeline': investment_timeline,
         'financial_goals': financial_goals,
         'existing_investments': existing_investments,
         'experience_level': experience_level,
@@ -462,7 +480,7 @@ def save_onboarding():
     preferences = current_user.preferences or {}
     preferences.update({
         'risk_profile': 'Conservative' if risk_tolerance_score <= 3 else 'Moderate' if risk_tolerance_score <= 7 else 'Aggressive',
-        'investment_horizon': 'Short Term' if investment_timeline and investment_timeline <= 3 else 'Medium Term' if investment_timeline and investment_timeline <= 10 else 'Long Term',
+        'investment_horizon': 'Medium Term',  # Default to medium term since we removed the field
         'dark_mode': dark_mode,
         'daily_tip': daily_tip,
         'learning_notifications': learning_notifications

@@ -147,18 +147,19 @@ def stock_detail(symbol):
 @login_required
 def add_to_watchlist(symbol):
     try:
-        db = g.db
-        
         # Check if already in watchlist
         if symbol in current_user.watchlist:
             flash(f'{symbol} is already in your watchlist', 'info')
         else:
             # Add to watchlist
-            db.users.update_one(
-                {'_id': current_user.id},
-                {'$push': {'watchlist': symbol}}
-            )
-            current_user.watchlist.append(symbol)
+            watchlist = current_user.watchlist.copy()
+            watchlist.append(symbol)
+            current_user.watchlist = watchlist
+            
+            # Save to the database
+            from app import db
+            db.session.commit()
+            
             flash(f'{symbol} added to your watchlist', 'success')
         
         # Return to stock page
@@ -173,16 +174,15 @@ def add_to_watchlist(symbol):
 @login_required
 def remove_from_watchlist(symbol):
     try:
-        db = g.db
-        
-        # Remove from watchlist
-        db.users.update_one(
-            {'_id': current_user.id},
-            {'$pull': {'watchlist': symbol}}
-        )
-        
-        if symbol in current_user.watchlist:
-            current_user.watchlist.remove(symbol)
+        # Remove from watchlist if it exists
+        watchlist = current_user.watchlist.copy()
+        if symbol in watchlist:
+            watchlist.remove(symbol)
+            current_user.watchlist = watchlist
+            
+            # Save to the database
+            from app import db
+            db.session.commit()
         
         flash(f'{symbol} removed from your watchlist', 'success')
         
